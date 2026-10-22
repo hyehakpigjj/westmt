@@ -139,42 +139,31 @@
 
   </div>
 
-  <!-- 모달: 연락처 수정 -->
-  <div id="phoneModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
+  <!-- 통합 모달: 연락처 및 특이사항(비고) 동시 수정 -->
+  <div id="editModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
     <div class="w-full max-w-xs bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-3">
       <div class="flex justify-between items-center border-b retro-border pb-2">
-        <span id="phoneModalTitle" class="text-xs font-bold text-[#2B448C]">연락처 수정</span>
-        <button onclick="closePhoneModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
+        <span id="editModalTitle" class="text-xs font-bold text-[#2B448C]">정보 수정</span>
+        <button onclick="closeEditModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
       </div>
-      <input type="hidden" id="phoneModalMemberId" />
-      <div>
-        <label class="text-[10px] text-stone-500 block mb-1">휴대폰 번호 (- 없이 입력 가능)</label>
-        <input type="tel" id="phoneModalInput" placeholder="01012345678" 
-               class="w-full bg-white border retro-border p-2 text-xs outline-none focus:border-[#2B448C]" />
+      <input type="hidden" id="editModalMemberId" />
+      
+      <div class="space-y-2.5">
+        <div>
+          <label class="text-[10px] text-stone-500 block mb-1">휴대폰 번호 (- 없이 입력 가능)</label>
+          <input type="tel" id="editModalPhone" placeholder="01012345678" 
+                 class="w-full bg-white border retro-border p-2 text-xs outline-none focus:border-[#2B448C]" />
+        </div>
+        <div>
+          <label class="text-[10px] text-stone-500 block mb-1">현장 특이사항 / 비고</label>
+          <textarea id="editModalNote" rows="3" placeholder="예: 레이저 어택부터 참여, 늦은 합류 등" 
+                    class="w-full bg-white border retro-border p-2 text-xs outline-none focus:border-[#2B448C] resize-none"></textarea>
+        </div>
       </div>
-      <div class="flex gap-2 justify-end pt-1">
-        <button onclick="closePhoneModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">취소</button>
-        <button onclick="savePhone()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">저장</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- 모달: 비고(메모) 수정 -->
-  <div id="noteModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
-    <div class="w-full max-w-xs bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-3">
-      <div class="flex justify-between items-center border-b retro-border pb-2">
-        <span id="noteModalTitle" class="text-xs font-bold text-[#2B448C]">특이사항 메모 입력</span>
-        <button onclick="closeNoteModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
-      </div>
-      <input type="hidden" id="noteModalMemberId" />
-      <div>
-        <label class="text-[10px] text-stone-500 block mb-1">현장 특이사항 / 메모</label>
-        <textarea id="noteModalInput" rows="3" placeholder="예: 레이저 어택부터 참여, 늦은 합류 등" 
-                  class="w-full bg-white border retro-border p-2 text-xs outline-none focus:border-[#2B448C] resize-none"></textarea>
-      </div>
-      <div class="flex gap-2 justify-end pt-1">
-        <button onclick="closeNoteModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">취소</button>
-        <button onclick="saveNote()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">저장</button>
+      <div class="flex gap-2 justify-end pt-1 border-t retro-border">
+        <button onclick="closeEditModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">취소</button>
+        <button onclick="saveEditModal()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">저장</button>
       </div>
     </div>
   </div>
@@ -378,28 +367,27 @@ function getAllCarOptions() {
                 </div>
               </div>
 
-              <!-- 우측: 통화 / 번호 수정 액션 (규격 및 연필 아이콘 통일) -->
+              <!-- 우측: 통화 / 통합 수정(연락처+비고) 액션 -->
               <div class="flex items-center gap-1">
                 ${hasPhone ? `
                   <a href="tel:${rawPhone}" class="px-2.5 py-1 text-[11px] font-bold bg-[#5BAE85] text-white rounded-none border border-[#5BAE85] flex items-center gap-1 active:scale-95">
                     <i class="fa-solid fa-phone text-[10px]"></i> 통화
                   </a>
                 ` : ''}
-                <button onclick="openPhoneModal(${m.id}, '${m.name}', '${m.phone || ''}')" 
+                <button onclick="openEditModal(${m.id})" 
                         class="px-2 py-1 text-[11px] border retro-border bg-stone-100 text-stone-600 hover:bg-stone-200 active:scale-95 flex items-center justify-center">
                   <i class="fa-solid fa-pen text-[10px]"></i>
                 </button>
               </div>
             </div>
 
-            <!-- 하단: 특이사항 비고란 -->
-            <div class="mt-2 pt-2 border-t retro-border flex justify-between items-center text-[10px] text-stone-500">
-              <span class="truncate flex-1 cursor-pointer hover:underline" onclick="openNoteModal(${m.id}, '${m.name}', '${(m.note || '').replace(/'/g, "\\'")}')">
-                <i class="fa-regular fa-note-sticky mr-1 text-[#2B448C]/60"></i>
-                ${m.note ? `<span class="text-[#C83E34] font-medium">${m.note}</span>` : '<span class="text-stone-400">비고 없음 (터치하여 입력)</span>'}
-              </span>
-              <span class="text-[9px] text-stone-400 font-mono pl-2">${m.game_type}</span>
-            </div>
+            <!-- 하단: 비고가 있는 경우에만 표시 (없으면 구좌 숨김) -->
+            ${m.note && m.note.trim() !== '' ? `
+              <div class="mt-2 pt-1.5 border-t retro-border flex items-center gap-1.5 text-[10px] text-[#C83E34] font-medium cursor-pointer" onclick="openEditModal(${m.id})">
+                <i class="fa-regular fa-note-sticky text-[#2B448C]/60 text-[11px]"></i>
+                <span class="truncate">${m.note}</span>
+              </div>
+            ` : ''}
           </div>
         `;
       }).join('');
@@ -577,55 +565,40 @@ function promptAddNewCar() {
   }
 }
 
-    // 12. 모달 제어: 전화번호
-    function openPhoneModal(id, name, phone) {
-      document.getElementById('phoneModalMemberId').value = id;
-      document.getElementById('phoneModalTitle').innerText = `${name} 님 연락처 수정`;
-      document.getElementById('phoneModalInput').value = phone || '';
-      document.getElementById('phoneModal').classList.remove('hidden');
+    // 12 & 13. 통합 모달 제어 (연락처 + 비고 동시 저장)
+    function openEditModal(id) {
+      const member = membersData.find(m => m.id === id);
+      if (!member) return;
+
+      document.getElementById('editModalMemberId').value = member.id;
+      document.getElementById('editModalTitle').innerText = `${member.name} 님 정보 수정`;
+      document.getElementById('editModalPhone').value = member.phone || '';
+      document.getElementById('editModalNote').value = member.note || '';
+      document.getElementById('editModal').classList.remove('hidden');
     }
-    function closePhoneModal() {
-      document.getElementById('phoneModal').classList.add('hidden');
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
     }
-    async function savePhone() {
-      const id = document.getElementById('phoneModalMemberId').value;
-      const phone = document.getElementById('phoneModalInput').value.trim();
+
+    async function saveEditModal() {
+      const id = document.getElementById('editModalMemberId').value;
+      const phone = document.getElementById('editModalPhone').value.trim();
+      const note = document.getElementById('editModalNote').value.trim();
 
       const { error } = await supabaseClient
         .from('members')
-        .update({ phone: phone || null, updated_at: new Date().toISOString() })
+        .update({
+          phone: phone || null,
+          note: note || null,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id);
 
       if (error) {
-        alert('연락처 저장 실패: ' + error.message);
+        alert('저장 실패: ' + error.message);
       } else {
-        closePhoneModal();
-      }
-    }
-
-    // 13. 모달 제어: 비고(메모)
-    function openNoteModal(id, name, note) {
-      document.getElementById('noteModalMemberId').value = id;
-      document.getElementById('noteModalTitle').innerText = `${name} 님 특이사항/메모`;
-      document.getElementById('noteModalInput').value = note || '';
-      document.getElementById('noteModal').classList.remove('hidden');
-    }
-    function closeNoteModal() {
-      document.getElementById('noteModal').classList.add('hidden');
-    }
-    async function saveNote() {
-      const id = document.getElementById('noteModalMemberId').value;
-      const note = document.getElementById('noteModalInput').value.trim();
-
-      const { error } = await supabaseClient
-        .from('members')
-        .update({ note: note || null, updated_at: new Date().toISOString() })
-        .eq('id', id);
-
-      if (error) {
-        alert('메모 저장 실패: ' + error.message);
-      } else {
-        closeNoteModal();
+        closeEditModal();
       }
     }
 
