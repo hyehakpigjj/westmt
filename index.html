@@ -96,13 +96,13 @@
                    class="w-full bg-white border retro-border pl-8 pr-3 py-1.5 text-xs outline-none focus:border-[#2B448C]" />
           </div>
 
-          <!-- 필터 칩스 -->
+          <!-- 필터 칩스: 점심O 및 플레이어 중심 카운트로 개편 -->
           <div class="flex flex-wrap gap-1 text-[11px]">
             <button onclick="setFilter('ALL')" class="filter-chip px-2 py-0.5 border retro-border font-bold bg-[#2B448C] text-white" data-filter="ALL">전체</button>
             <button onclick="setFilter('UNCHECKED')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="UNCHECKED">미출석</button>
             <button onclick="setFilter('NOPHONE')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="NOPHONE">번호없음</button>
-            <button onclick="setFilter('NOLUNCH')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="NOLUNCH">점심X(3)</button>
-            <button onclick="setFilter('NOGAME')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="NOGAME">경기미참여(4)</button>
+            <button onclick="setFilter('LUNCH_O')" id="chip-lunch" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="LUNCH_O">점심O (19)</button>
+            <button onclick="setFilter('PLAYER')" id="chip-player" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="PLAYER">플레이어 (17)</button>
           </div>
         </div>
 
@@ -268,13 +268,23 @@ function getAllCarOptions() {
         .subscribe();
     }
 
-    // 5. 상단 지표 업데이트
+    // 5. 상단 지표 및 필터 칩 숫자 실시간 업데이트
     function updateMetrics() {
       const checkedIn = membersData.filter(m => m.is_checked_in).length;
       const noPhone = membersData.filter(m => !m.phone || m.phone.trim() === '').length;
+      const lunchO = membersData.filter(m => m.lunch_yn).length;
+      const players = membersData.filter(m => m.game_type === '경기 참여 (플레이어)').length;
+
       document.getElementById('checkedInCount').innerText = checkedIn;
       document.getElementById('totalCount').innerText = membersData.length;
       document.getElementById('noPhoneCount').innerText = `${noPhone}명 미등록`;
+
+      // 필터 칩 실시간 숫자 갱신
+      const lunchBtn = document.getElementById('chip-lunch');
+      if (lunchBtn) lunchBtn.innerText = `점심O (${lunchO})`;
+
+      const playerBtn = document.getElementById('chip-player');
+      if (playerBtn) playerBtn.innerText = `플레이어 (${players})`;
     }
 
     // 6. 탭 전환
@@ -318,8 +328,8 @@ function getAllCarOptions() {
 
         if (currentFilter === 'UNCHECKED') return !m.is_checked_in;
         if (currentFilter === 'NOPHONE') return !m.phone || m.phone.trim() === '';
-        if (currentFilter === 'NOLUNCH') return !m.lunch_yn;
-        if (currentFilter === 'NOGAME') return m.game_type === '경기 미참여';
+        if (currentFilter === 'LUNCH_O') return m.lunch_yn;
+        if (currentFilter === 'PLAYER') return m.game_type === '경기 참여 (플레이어)';
         return true;
       });
 
