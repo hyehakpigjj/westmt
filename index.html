@@ -379,20 +379,17 @@ function getAllCarOptions() {
                 </div>
               </div>
 
-              <!-- 우측: 통화 / 번호 수정 액션 -->
+              <!-- 우측: 통화 / 번호 수정 액션 (규격 및 연필 아이콘 통일) -->
               <div class="flex items-center gap-1">
                 ${hasPhone ? `
                   <a href="tel:${rawPhone}" class="px-2.5 py-1 text-[11px] font-bold bg-[#5BAE85] text-white rounded-none border border-[#5BAE85] flex items-center gap-1 active:scale-95">
                     <i class="fa-solid fa-phone text-[10px]"></i> 통화
                   </a>
-                  <button onclick="openPhoneModal(${m.id}, '${m.name}', '${m.phone || ''}')" class="px-1.5 py-1 text-[11px] border retro-border bg-stone-100 text-stone-600">
-                    <i class="fa-solid fa-pen text-[9px]"></i>
-                  </button>
-                ` : `
-                  <button onclick="openPhoneModal(${m.id}, '${m.name}', '')" class="px-2 py-1 text-[11px] font-bold bg-[#E06D6D] text-white border border-[#E06D6D] flex items-center gap-1 active:scale-95">
-                    <i class="fa-solid fa-plus text-[9px]"></i> 번호 등록
-                  </button>
-                `}
+                ` : ''}
+                <button onclick="openPhoneModal(${m.id}, '${m.name}', '${m.phone || ''}')" 
+                        class="px-2 py-1 text-[11px] border retro-border bg-stone-100 text-stone-600 hover:bg-stone-200 active:scale-95 flex items-center justify-center">
+                  <i class="fa-solid fa-pen text-[10px]"></i>
+                </button>
               </div>
             </div>
 
