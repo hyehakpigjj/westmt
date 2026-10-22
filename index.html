@@ -27,7 +27,6 @@
     .retro-border {
       border-color: rgba(43, 68, 140, 0.25);
     }
-    /* 스크롤바 미세 스타일링 */
     ::-webkit-scrollbar {
       width: 4px;
       height: 4px;
@@ -49,32 +48,33 @@
           <span class="text-xs font-bold tracking-wider text-[#C83E34]">〈 WEST 2026 GANGNEUNG MT 〉</span>
           <span class="block text-[10px] font-mono text-[#2B448C]/70">ADMIN OPERATIONS DESK</span>
         </div>
-        <button onclick="openSettingsModal()" class="text-[11px] font-mono text-[#2B448C]/80 hover:text-[#2B448C] underline cursor-pointer flex items-center gap-1">
-          <i class="fa-solid fa-gear"></i> SETTINGS
+        <!-- 관리자 메뉴 버튼 (Supabase 설정창 숨김 및 관리 기능 배치) -->
+        <button onclick="openAdminModal()" class="text-[11px] font-bold text-[#2B448C] hover:text-[#C83E34] border border-[#2B448C]/30 bg-white/60 px-2 py-1 flex items-center gap-1 active:scale-95">
+          <i class="fa-solid fa-user-shield text-[10px]"></i> 관리자
         </button>
       </header>
 
       <!-- Metric Overview -->
-      <section class="py-4 border-b retro-border">
+      <section class="py-3 border-b retro-border">
         <div class="flex justify-between items-end">
           <div>
-            <span class="text-[11px] font-bold tracking-widest text-[#2B448C]/70 block">CHECK-IN STATUS</span>
+            <span class="text-[10px] font-bold tracking-widest text-[#2B448C]/70 block">CHECK-IN STATUS</span>
             <div class="flex items-baseline gap-1.5">
-              <span id="checkedInCount" class="text-4xl font-black text-[#C83E34] tracking-tight">0</span>
-              <span class="text-lg font-bold text-[#2B448C]/60">/</span>
-              <span id="totalCount" class="text-xl font-bold text-[#2B448C]">22</span>
+              <span id="checkedInCount" class="text-3xl font-black text-[#C83E34] tracking-tight">0</span>
+              <span class="text-base font-bold text-[#2B448C]/60">/</span>
+              <span id="totalCount" class="text-lg font-bold text-[#2B448C]">22</span>
             </div>
           </div>
           <div class="text-right">
-            <span class="text-[10px] font-mono text-stone-500 block">NO PHONE CONTACTS</span>
-            <span id="noPhoneCount" class="text-xs font-bold text-[#E06D6D] bg-[#E06D6D]/10 px-2 py-0.5 border border-[#E06D6D]/30 inline-block">
-              5명 미등록
+            <span class="text-[10px] font-mono text-stone-500 block">NO PHONE NUMBERS</span>
+            <span id="noPhoneCount" class="text-[11px] font-bold text-[#E06D6D] bg-[#E06D6D]/10 px-1.5 py-0.5 border border-[#E06D6D]/30 inline-block">
+              0명 미등록
             </span>
           </div>
         </div>
       </section>
 
-      <!-- Navigation Tabs (Retro Grid Tabs) -->
+      <!-- Navigation Tabs -->
       <nav class="grid grid-cols-3 gap-1 my-3 bg-[#F5F4EE] p-1 border retro-border">
         <button id="tab-members" onclick="switchTab('members')" class="py-2 text-xs font-bold text-center bg-[#2B448C] text-white shadow-sm transition-all">
           명단·출석
@@ -89,7 +89,6 @@
 
       <!-- 탭 1: 명단 & 출석 뷰 -->
       <div id="view-members" class="space-y-3">
-        <!-- 검색 및 간이 필터 바 -->
         <div class="space-y-2">
           <div class="relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-stone-400"></i>
@@ -107,7 +106,7 @@
           </div>
         </div>
 
-        <!-- 인원 리스트 컨테이너 -->
+        <!-- 인원 리스트 -->
         <div id="membersList" class="space-y-2 max-h-[58vh] overflow-y-auto pr-0.5">
           <div class="text-center py-10 text-xs text-stone-400">데이터를 불러오는 중입니다...</div>
         </div>
@@ -126,20 +125,16 @@
       <div id="view-carpool" class="hidden space-y-3 max-h-[64vh] overflow-y-auto pr-0.5">
         <div class="flex justify-between items-center text-xs pb-1 border-b retro-border">
           <span class="font-bold text-[#2B448C]">서울 > 홍천 휴게소 카풀 매칭</span>
-          <span class="text-[10px] text-stone-400">총 10개 차량</span>
+          <span class="text-[10px] text-stone-400">차량·차주 실시간 변경 가능</span>
         </div>
         <div id="carpoolContainer" class="space-y-3"></div>
       </div>
     </div>
 
-    <!-- Footer & Legend -->
-    <footer class="pt-3 mt-4 border-t retro-border flex justify-between items-center text-[11px] text-[#2B448C]/80">
-      <div class="flex items-center gap-2">
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#5BAE85]"></span> 출석완료</span>
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#E5A84B]"></span> 대기중</span>
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#E06D6D]"></span> 번호필요</span>
-      </div>
-      <span class="text-[10px] text-stone-400 font-mono">WEST GANGNEUNG</span>
+    <!-- Footer (불필요한 레전드 제거 완료) -->
+    <footer class="pt-3 mt-4 border-t retro-border flex justify-between items-center text-[11px] text-[#2B448C]/70">
+      <span class="font-mono text-[10px]">WEST ICE HOCKEY CLUB</span>
+      <span class="text-[10px] text-stone-400 font-mono">GANGNEUNG MT 2026</span>
     </footer>
 
   </div>
@@ -184,54 +179,51 @@
     </div>
   </div>
 
-  <!-- 모달: Supabase 설정 -->
-  <div id="settingsModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
-    <div class="w-full max-w-sm bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-3">
+  <!-- 모달: 관리자 메뉴 -->
+  <div id="adminModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
+    <div class="w-full max-w-xs bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-4">
       <div class="flex justify-between items-center border-b retro-border pb-2">
-        <span class="text-xs font-bold text-[#C83E34]">SUPABASE 연동 설정</span>
-        <button onclick="closeSettingsModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
+        <span class="text-xs font-bold text-[#C83E34] flex items-center gap-1">
+          <i class="fa-solid fa-shield-halved"></i> 현장 관리자 도구
+        </span>
+        <button onclick="closeAdminModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
       </div>
-      <p class="text-[11px] text-stone-600">
-        Supabase 대시보드의 Project Settings > API 에서 Project URL과 anon key를 입력해주세요.
-      </p>
+      
       <div class="space-y-2">
-        <div>
-          <label class="text-[10px] font-mono text-stone-500 block">PROJECT URL</label>
-          <input type="text" id="settingUrl" placeholder="https://xyzcompany.supabase.co" 
-                 class="w-full bg-white border retro-border p-1.5 text-xs outline-none font-mono" />
-        </div>
-        <div>
-          <label class="text-[10px] font-mono text-stone-500 block">ANON PUBLIC KEY</label>
-          <input type="password" id="settingKey" placeholder="eyJhbGciOi..." 
-                 class="w-full bg-white border retro-border p-1.5 text-xs outline-none font-mono" />
-        </div>
+        <button onclick="resetAllCheckIn()" class="w-full text-left p-2.5 bg-white border retro-border text-xs text-[#E06D6D] font-bold hover:bg-stone-50 active:scale-[0.99] flex items-center justify-between">
+          <span><i class="fa-solid fa-rotate-left mr-1.5"></i> 전체 출석 일괄 초기화</span>
+          <i class="fa-solid fa-chevron-right text-[10px] text-stone-400"></i>
+        </button>
+
+        <button onclick="openAddMemberPrompt()" class="w-full text-left p-2.5 bg-white border retro-border text-xs text-[#2B448C] font-bold hover:bg-stone-50 active:scale-[0.99] flex items-center justify-between">
+          <span><i class="fa-solid fa-user-plus mr-1.5"></i> 현장 신규 인원 추가</span>
+          <i class="fa-solid fa-chevron-right text-[10px] text-stone-400"></i>
+        </button>
       </div>
-      <div class="flex gap-2 justify-end pt-2 border-t retro-border">
-        <button onclick="closeSettingsModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">닫기</button>
-        <button onclick="saveSettings()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">연동 저장</button>
+
+      <div class="border-t retro-border pt-2 text-right">
+        <button onclick="closeAdminModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">닫기</button>
       </div>
     </div>
   </div>
 
   <script>
-    // 1. Supabase 접속 기본값
-    let SUPABASE_URL = localStorage.getItem('west_sp_url') || 'https://achcypzftdlqqtemmzjz.supabase.co';
-    let SUPABASE_ANON_KEY = localStorage.getItem('west_sp_key') || 'sb_publishable_vOLa6-n7kiH69Ie-_Af4Iw_hN61dTPb';
+    // 1. Supabase 연동 정보 (코드 내 고정)
+    const SUPABASE_URL = 'https://achcypzftdlqqtemmzjz.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_vOLa6-n7kiH69Ie-_Af4Iw_hN61dTPb';
     
     let supabaseClient = null;
     let membersData = [];
     let currentFilter = 'ALL';
+
     const ROOM_OPTIONS = ['ROOM 1 (👃)', 'ROOM 2', 'ROOM 3', 'ROOM 4 (여자)', 'ROOM 5 (여자)', 'X'];
+    const CARPOOL_OPTIONS = ['1번 차', '2번 차', '3번 차', '4번 차', '5번 차', '6번 차', '7번 차', '8번 차', '9번 차', '10번 차', '미배정'];
 
     // 2. 초기화
     function initSupabase() {
-      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        loadMembers();
-        setupRealtime();
-      } else {
-        openSettingsModal();
-      }
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      loadMembers();
+      setupRealtime();
     }
 
     // 3. 데이터 로드
@@ -254,7 +246,7 @@
       renderCarpool();
     }
 
-    // 4. Supabase Realtime 리스너 등록
+    // 4. Realtime 리스너 등록
     function setupRealtime() {
       supabaseClient
         .channel('public:members')
@@ -275,13 +267,13 @@
         .subscribe();
     }
 
-    // 5. 상단 카운터 업데이트
+    // 5. 상단 지표 업데이트
     function updateMetrics() {
       const checkedIn = membersData.filter(m => m.is_checked_in).length;
       const noPhone = membersData.filter(m => !m.phone || m.phone.trim() === '').length;
       document.getElementById('checkedInCount').innerText = checkedIn;
       document.getElementById('totalCount').innerText = membersData.length;
-      document.getElementById('noPhoneCount').innerText = `${noPhone}명 번호미등록`;
+      document.getElementById('noPhoneCount').innerText = `${noPhone}명 미등록`;
     }
 
     // 6. 탭 전환
@@ -318,13 +310,11 @@
       const search = document.getElementById('searchInput').value.trim().toLowerCase();
 
       let filtered = membersData.filter(m => {
-        // 검색어 매칭
         const matchSearch = m.name.toLowerCase().includes(search) || 
-                            (m.carpool && m.carpool.toLowerCase().includes(search)) ||
+                            (m.carpool_car && m.carpool_car.toLowerCase().includes(search)) ||
                             (m.room_no && m.room_no.toLowerCase().includes(search));
         if (!matchSearch) return false;
 
-        // 필터 매칭
         if (currentFilter === 'UNCHECKED') return !m.is_checked_in;
         if (currentFilter === 'NOPHONE') return !m.phone || m.phone.trim() === '';
         if (currentFilter === 'NOLUNCH') return !m.lunch_yn;
@@ -341,25 +331,26 @@
         const isChecked = m.is_checked_in;
         const hasPhone = m.phone && m.phone.trim() !== '';
         const rawPhone = hasPhone ? m.phone.replace(/[^0-9]/g, '') : '';
-        const phoneFormatted = hasPhone ? formatPhone(m.phone) : '번호 등록 필요';
+        const driverBadge = m.is_driver ? '<span class="text-[9px] bg-[#C83E34] text-white px-1 font-mono">차주</span>' : '';
 
         return `
-          <div class="border retro-border ${isChecked ? 'bg-white/70' : 'bg-white/30'} p-3 rounded-none relative">
+          <div class="border retro-border ${isChecked ? 'bg-white/80' : 'bg-white/30'} p-3 rounded-none relative">
             <div class="flex items-start justify-between">
               
-              <!-- 좌측: 이름 / 성별 / 출석 상태 -->
+              <!-- 좌측: 출석 체크박스 & 프로필 -->
               <div class="flex items-center gap-2">
                 <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCheckIn(${m.id}, this.checked)" 
                        class="w-4 h-4 accent-[#2B448C] cursor-pointer" />
                 <div>
-                  <div class="flex items-center gap-1.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="text-sm font-bold ${isChecked ? 'line-through text-stone-400' : 'text-[#2B448C]'}">${m.name}</span>
                     <span class="text-[10px] text-stone-400 font-mono">(${m.gender})</span>
+                    ${driverBadge}
                     ${!m.lunch_yn ? '<span class="text-[9px] bg-[#E06D6D]/15 text-[#E06D6D] border border-[#E06D6D]/30 px-1 font-bold">점심X</span>' : ''}
                     ${m.game_type === '경기 미참여' ? '<span class="text-[9px] bg-stone-200 text-stone-600 px-1 font-bold">경기X</span>' : ''}
                   </div>
                   <div class="text-[10px] font-mono text-[#2B448C]/70 mt-0.5">
-                    ${m.carpool || '차량 미지정'} · ${m.room_no}
+                    ${m.carpool_car || '미배정'} · ${m.room_no}
                   </div>
                 </div>
               </div>
@@ -381,7 +372,7 @@
               </div>
             </div>
 
-            <!-- 하단: 비고란 (터치 시 인라인 모달 수정) -->
+            <!-- 하단: 특이사항 비고란 -->
             <div class="mt-2 pt-2 border-t retro-border flex justify-between items-center text-[10px] text-stone-500">
               <span class="truncate flex-1 cursor-pointer hover:underline" onclick="openNoteModal(${m.id}, '${m.name}', '${(m.note || '').replace(/'/g, "\\'")}')">
                 <i class="fa-regular fa-note-sticky mr-1 text-[#2B448C]/60"></i>
@@ -406,8 +397,8 @@
         grouped[room].push(m);
       });
 
-      container.innerHTML = Object.keys(grouped).map(roomName => {
-        const occupants = grouped[roomName];
+      container.innerHTML = ROOM_OPTIONS.map(roomName => {
+        const occupants = grouped[roomName] || [];
         return `
           <div class="border retro-border bg-white/40 p-3 rounded-none space-y-2">
             <div class="flex justify-between items-center border-b retro-border pb-1">
@@ -426,7 +417,6 @@
                     <span class="text-[10px] text-stone-400 font-mono">(${m.gender})</span>${m.is_checked_in ? '<span class="w-1.5 h-1.5 rounded-full bg-[#5BAE85]"></span>' : ''}
                   </div>
                   
-                  <!-- 방 이동 선택 드롭다운 -->
                   <select onchange="updateRoom(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
                     ${ROOM_OPTIONS.map(opt => `<option value="${opt}" ${opt === m.room_no ? 'selected' : ''}>${opt}</option>`).join('')}
                   </select>
@@ -438,26 +428,20 @@
       }).join('');
     }
 
-    // 10. 카풀 뷰 렌더링
+    // 10. 카풀 뷰 렌더링 (방배정 방식 차량 변경 & 차주 지정 토글 지원)
     function renderCarpool() {
       const container = document.getElementById('carpoolContainer');
       const grouped = {};
 
+      CARPOOL_OPTIONS.forEach(c => grouped[c] = []);
       membersData.forEach(m => {
-        let car = m.carpool ? m.carpool.replace(' (차주)', '').trim() : '미배정';
+        let car = m.carpool_car || '미배정';
         if (!grouped[car]) grouped[car] = [];
         grouped[car].push(m);
       });
 
-      // 번호순 정렬
-      const sortedKeys = Object.keys(grouped).sort((a, b) => {
-        const numA = parseInt(a.replace(/[^0-9]/g, '')) || 99;
-        const numB = parseInt(b.replace(/[^0-9]/g, '')) || 99;
-        return numA - numB;
-      });
-
-      container.innerHTML = sortedKeys.map(carKey => {
-        const list = grouped[carKey];
+      container.innerHTML = CARPOOL_OPTIONS.map(carKey => {
+        const list = grouped[carKey] || [];
         return `
           <div class="border retro-border bg-white/40 p-3 rounded-none space-y-2">
             <div class="flex justify-between items-center border-b retro-border pb-1">
@@ -465,61 +449,69 @@
               <span class="text-[10px] font-mono text-[#2B448C]">${list.length}명 탑승</span>
             </div>
             
-            <div class="space-y-1">
-              ${list.map(m => {
-                const isOwner = m.carpool && m.carpool.includes('(차주)');
-                const rawPhone = m.phone ? m.phone.replace(/[^0-9]/g, '') : null;
-                return `
-                  <div class="flex justify-between items-center text-xs py-1 border-b border-stone-100 last:border-none">
-                    <div class="flex items-center gap-1.5">
-                      <span class="${isOwner ? 'font-bold text-[#C83E34]' : 'font-medium text-[#2B448C]'}">${m.name}</span>${isOwner ? '<span class="text-[9px] bg-[#C83E34] text-white px-1 font-mono">차주</span>' : ''}
-                      ${m.is_checked_in ? '<span class="text-[9px] text-[#5BAE85] font-bold">도착</span>' : ''}
-                    </div>
-                    <div>
-                      ${rawPhone ? `
-                        <a href="tel:${rawPhone}" class="text-[10px] text-[#2B448C] underline font-mono">
-                          <i class="fa-solid fa-phone mr-0.5 text-[9px]"></i> ${formatPhone(m.phone)}
-                        </a>
-                      ` : '<span class="text-[10px] text-[#E06D6D]">번호 없음</span>'}
-                    </div>
+            <div class="space-y-1.5">
+              ${list.length === 0 ? '<div class="text-[11px] text-stone-400 py-1">탑승 인원 없음</div>' : ''}
+              ${list.map(m => `
+                <div class="flex justify-between items-center bg-white p-1.5 border retro-border text-xs">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold ${m.is_driver ? 'text-[#C83E34]' : 'text-[#2B448C]'}">${m.name}</span>
+                    <button onclick="toggleDriver(${m.id},${!m.is_driver})" 
+                            class="text-[9px] px-1 py-0.2 border transition-all ${m.is_driver ? 'bg-[#C83E34] text-white border-[#C83E34]' : 'bg-stone-100 text-stone-400 border-stone-200'}">
+                      차주
+                    </button>
+                    ${m.is_checked_in ? '<span class="text-[9px] text-[#5BAE85] font-bold">도착</span>' : ''}
                   </div>
-                `;
-              }).join('')}
+                  
+                  <!-- 카풀 차량 변경 드롭다운 -->
+                  <select onchange="updateCarpool(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
+                    ${CARPOOL_OPTIONS.map(opt => `<option value="${opt}" ${opt === m.carpool_car ? 'selected' : ''}>${opt}</option>`).join('')}
+                  </select>
+                </div>
+              `).join('')}
             </div>
           </div>
         `;
       }).join('');
     }
 
-    // 11. DB 액션: 출석 체크 토글
+    // 11. DB 액션 함수들
     async function toggleCheckIn(id, isChecked) {
-      if (!supabaseClient) return;
       const { error } = await supabaseClient
         .from('members')
         .update({ is_checked_in: isChecked, updated_at: new Date().toISOString() })
         .eq('id', id);
 
-      if (error) {
-        alert('출석 갱신 실패: ' + error.message);
-        loadMembers();
-      }
+      if (error) alert('출석 상태 갱신 실패: ' + error.message);
     }
 
-    // 12. DB 액션: 방 이동
     async function updateRoom(id, newRoom) {
-      if (!supabaseClient) return;
       const { error } = await supabaseClient
         .from('members')
         .update({ room_no: newRoom, updated_at: new Date().toISOString() })
         .eq('id', id);
 
-      if (error) {
-        alert('방배정 변경 실패: ' + error.message);
-        loadMembers();
-      }
+      if (error) alert('방배정 변경 실패: ' + error.message);
     }
 
-    // 13. 모달 제어: 전화번호
+    async function updateCarpool(id, newCar) {
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ carpool_car: newCar, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) alert('카풀 배정 변경 실패: ' + error.message);
+    }
+
+    async function toggleDriver(id, newDriverStatus) {
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ is_driver: newDriverStatus, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) alert('차주 지정 변경 실패: ' + error.message);
+    }
+
+    // 12. 모달 제어: 전화번호
     function openPhoneModal(id, name, phone) {
       document.getElementById('phoneModalMemberId').value = id;
       document.getElementById('phoneModalTitle').innerText = `${name} 님 연락처 수정`;
@@ -545,7 +537,7 @@
       }
     }
 
-    // 14. 모달 제어: 비고(메모)
+    // 13. 모달 제어: 비고(메모)
     function openNoteModal(id, name, note) {
       document.getElementById('noteModalMemberId').value = id;
       document.getElementById('noteModalTitle').innerText = `${name} 님 특이사항/메모`;
@@ -571,44 +563,67 @@
       }
     }
 
-    // 15. 모달 제어: Supabase 환경설정
-    function openSettingsModal() {
-      document.getElementById('settingUrl').value = SUPABASE_URL;
-      document.getElementById('settingKey').value = SUPABASE_ANON_KEY;
-      document.getElementById('settingsModal').classList.remove('hidden');
+    // 14. 모달 제어: 관리자 도구
+    function openAdminModal() {
+      document.getElementById('adminModal').classList.remove('hidden');
     }
-    function closeSettingsModal() {
-      document.getElementById('settingsModal').classList.add('hidden');
-    }
-    function saveSettings() {
-      const url = document.getElementById('settingUrl').value.trim();
-      const key = document.getElementById('settingKey').value.trim();
-      if (!url || !key) {
-        alert('URL과 anon Key를 모두 입력해주세요.');
-        return;
-      }
-      localStorage.setItem('west_sp_url', url);
-      localStorage.setItem('west_sp_key', key);
-      SUPABASE_URL = url;
-      SUPABASE_ANON_KEY = key;
-      closeSettingsModal();
-      initSupabase();
+    function closeAdminModal() {
+      document.getElementById('adminModal').classList.add('hidden');
     }
 
-    // 보조 함수: 휴대폰 번호 포맷팅
+    async function resetAllCheckIn() {
+      if (!confirm('정말 전체 인원의 출석 상태를 "미출석"으로 초기화하시겠습니까?')) return;
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ is_checked_in: false, updated_at: new Date().toISOString() })
+        .neq('id', 0);
+
+      if (error) {
+        alert('출석 초기화 실패: ' + error.message);
+      } else {
+        alert('출석이 모두 초기화되었습니다.');
+        closeAdminModal();
+      }
+    }
+
+    async function openAddMemberPrompt() {
+      const name = prompt('추가할 인원의 성함을 입력해주세요:');
+      if (!name || !name.trim()) return;
+      const gender = prompt('성별을 입력해주세요 (남자 / 여자):', '남자');
+
+      const { error } = await supabaseClient
+        .from('members')
+        .insert([{
+          name: name.trim(),
+          gender: gender ? gender.trim() : '남자',
+          phone: null,
+          game_type: '경기 참여 (플레이어)',
+          stay_yn: true,
+          room_no: 'ROOM 2',
+          laser_yn: true,
+          lunch_yn: true,
+          carpool_car: '미배정',
+          is_driver: false,
+          note: null,
+          is_checked_in: false
+        }]);
+
+      if (error) {
+        alert('인원 추가 실패: ' + error.message);
+      } else {
+        alert(`${name} 님이 추가되었습니다.`);
+        closeAdminModal();
+      }
+    }
+
     function formatPhone(phone) {
       if (!phone) return '';
       const clean = phone.replace(/[^0-9]/g, '');
-      if (clean.length === 11) {
-        return clean.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
-      }
-      if (clean.length === 10) {
-        return clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
-      }
+      if (clean.length === 11) return clean.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+      if (clean.length === 10) return clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
       return phone;
     }
 
-    // 시작
     window.addEventListener('DOMContentLoaded', initSupabase);
   </script>
 </body>
