@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>WEST 2026 GANGNEUNG MT OPS</title>
+  
+  <!-- Retro Design System Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Noto+Sans+KR:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+      background-color: #F4F2EC;
+      color: #2B448C;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .retro-border {
+      border-color: rgba(43, 68, 140, 0.25);
+    }
+    /* 스크롤바 미세 스타일링 */
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(43, 68, 140, 0.2);
+    }
+  </style>
+</head>
+<body class="p-2 sm:p-6 flex justify-center items-start min-h-screen">
+
+  <!-- 메인 종이 카드 컨테이너 -->
+  <div class="w-full max-w-lg bg-[#FAF9F5] p-4 sm:p-5 rounded-none sm:rounded-sm shadow-md border retro-border min-h-[92vh] flex flex-col justify-between">
+    
+    <div>
+      <!-- Header -->
+      <header class="flex justify-between items-center pb-3 border-b retro-border">
+        <div>
+          <span class="text-xs font-bold tracking-wider text-[#C83E34]">〈 WEST 2026 GANGNEUNG MT 〉</span>
+          <span class="block text-[10px] font-mono text-[#2B448C]/70">ADMIN OPERATIONS DESK</span>
+        </div>
+        <button onclick="openSettingsModal()" class="text-[11px] font-mono text-[#2B448C]/80 hover:text-[#2B448C] underline cursor-pointer flex items-center gap-1">
+          <i class="fa-solid fa-gear"></i> SETTINGS
+        </button>
+      </header>
+
+      <!-- Metric Overview -->
+      <section class="py-4 border-b retro-border">
+        <div class="flex justify-between items-end">
+          <div>
+            <span class="text-[11px] font-bold tracking-widest text-[#2B448C]/70 block">CHECK-IN STATUS</span>
+            <div class="flex items-baseline gap-1.5">
+              <span id="checkedInCount" class="text-4xl font-black text-[#C83E34] tracking-tight">0</span>
+              <span class="text-lg font-bold text-[#2B448C]/60">/</span>
+              <span id="totalCount" class="text-xl font-bold text-[#2B448C]">22</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] font-mono text-stone-500 block">NO PHONE CONTACTS</span>
+            <span id="noPhoneCount" class="text-xs font-bold text-[#E06D6D] bg-[#E06D6D]/10 px-2 py-0.5 border border-[#E06D6D]/30 inline-block">
+              5명 미등록
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Navigation Tabs (Retro Grid Tabs) -->
+      <nav class="grid grid-cols-3 gap-1 my-3 bg-[#F5F4EE] p-1 border retro-border">
+        <button id="tab-members" onclick="switchTab('members')" class="py-2 text-xs font-bold text-center bg-[#2B448C] text-white shadow-sm transition-all">
+          명단·출석
+        </button>
+        <button id="tab-rooms" onclick="switchTab('rooms')" class="py-2 text-xs font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all">
+          방배정
+        </button>
+        <button id="tab-carpool" onclick="switchTab('carpool')" class="py-2 text-xs font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all">
+          카풀 현황
+        </button>
+      </nav>
+
+      <!-- 탭 1: 명단 & 출석 뷰 -->
+      <div id="view-members" class="space-y-3">
+        <!-- 검색 및 간이 필터 바 -->
+        <div class="space-y-2">
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-stone-400"></i>
+            <input type="text" id="searchInput" oninput="renderMembers()" placeholder="이름, 차량, 방 검색..." 
+                   class="w-full bg-white border retro-border pl-8 pr-3 py-1.5 text-xs outline-none focus:border-[#2B448C]" />
+          </div>
+
+          <!-- 필터 칩스 -->
+          <div class="flex flex-wrap gap-1 text-[11px]">
+            <button onclick="setFilter('ALL')" class="filter-chip px-2 py-0.5 border retro-border font-bold bg-[#2B448C] text-white" data-filter="ALL">전체</button>
+            <button onclick="setFilter('UNCHECKED')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="UNCHECKED">미출석</button>
+            <button onclick="setFilter('NOPHONE')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="NOPHONE">번호없음</button>
+            <button onclick="setFilter('NOLUNCH')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="NOLUNCH">점심X(3)</button>
+            <button onclick="setFilter('NOGAME')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="NOGAME">경기미참여(4)</button>
+          </div>
+        </div>
+
+        <!-- 인원 리스트 컨테이너 -->
+        <div id="membersList" class="space-y-2 max-h-[58vh] overflow-y-auto pr-0.5">
+          <div class="text-center py-10 text-xs text-stone-400">데이터를 불러오는 중입니다...</div>
+        </div>
+      </div>
+
+      <!-- 탭 2: 방배정 뷰 -->
+      <div id="view-rooms" class="hidden space-y-3 max-h-[64vh] overflow-y-auto pr-0.5">
+        <div class="flex justify-between items-center text-xs pb-1 border-b retro-border">
+          <span class="font-bold text-[#2B448C]">실시간 방배정 보드</span>
+          <span class="text-[10px] text-stone-400">드롭다운으로 바로 방 이동</span>
+        </div>
+        <div id="roomsContainer" class="space-y-3"></div>
+      </div>
+
+      <!-- 탭 3: 카풀 뷰 -->
+      <div id="view-carpool" class="hidden space-y-3 max-h-[64vh] overflow-y-auto pr-0.5">
+        <div class="flex justify-between items-center text-xs pb-1 border-b retro-border">
+          <span class="font-bold text-[#2B448C]">서울 > 홍천 휴게소 카풀 매칭</span>
+          <span class="text-[10px] text-stone-400">총 10개 차량</span>
+        </div>
+        <div id="carpoolContainer" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- Footer & Legend -->
+    <footer class="pt-3 mt-4 border-t retro-border flex justify-between items-center text-[11px] text-[#2B448C]/80">
+      <div class="flex items-center gap-2">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#5BAE85]"></span> 출석완료</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#E5A84B]"></span> 대기중</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#E06D6D]"></span> 번호필요</span>
+      </div>
+      <span class="text-[10px] text-stone-400 font-mono">WEST GANGNEUNG</span>
+    </footer>
+
+  </div>
+
+  <!-- 모달: 연락처 수정 -->
+  <div id="phoneModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
+    <div class="w-full max-w-xs bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-3">
+      <div class="flex justify-between items-center border-b retro-border pb-2">
+        <span id="phoneModalTitle" class="text-xs font-bold text-[#2B448C]">연락처 수정</span>
+        <button onclick="closePhoneModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
+      </div>
+      <input type="hidden" id="phoneModalMemberId" />
+      <div>
+        <label class="text-[10px] text-stone-500 block mb-1">휴대폰 번호 (- 없이 입력 가능)</label>
+        <input type="tel" id="phoneModalInput" placeholder="01012345678" 
+               class="w-full bg-white border retro-border p-2 text-xs outline-none focus:border-[#2B448C]" />
+      </div>
+      <div class="flex gap-2 justify-end pt-1">
+        <button onclick="closePhoneModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">취소</button>
+        <button onclick="savePhone()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달: 비고(메모) 수정 -->
+  <div id="noteModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
+    <div class="w-full max-w-xs bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-3">
+      <div class="flex justify-between items-center border-b retro-border pb-2">
+        <span id="noteModalTitle" class="text-xs font-bold text-[#2B448C]">특이사항 메모 입력</span>
+        <button onclick="closeNoteModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
+      </div>
+      <input type="hidden" id="noteModalMemberId" />
+      <div>
+        <label class="text-[10px] text-stone-500 block mb-1">현장 특이사항 / 메모</label>
+        <textarea id="noteModalInput" rows="3" placeholder="예: 레이저 어택부터 참여, 늦은 합류 등" 
+                  class="w-full bg-white border retro-border p-2 text-xs outline-none focus:border-[#2B448C] resize-none"></textarea>
+      </div>
+      <div class="flex gap-2 justify-end pt-1">
+        <button onclick="closeNoteModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">취소</button>
+        <button onclick="saveNote()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달: Supabase 설정 -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
+    <div class="w-full max-w-sm bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-3">
+      <div class="flex justify-between items-center border-b retro-border pb-2">
+        <span class="text-xs font-bold text-[#C83E34]">SUPABASE 연동 설정</span>
+        <button onclick="closeSettingsModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
+      </div>
+      <p class="text-[11px] text-stone-600">
+        Supabase 대시보드의 Project Settings > API 에서 Project URL과 anon key를 입력해주세요.
+      </p>
+      <div class="space-y-2">
+        <div>
+          <label class="text-[10px] font-mono text-stone-500 block">PROJECT URL</label>
+          <input type="text" id="settingUrl" placeholder="https://xyzcompany.supabase.co" 
+                 class="w-full bg-white border retro-border p-1.5 text-xs outline-none font-mono" />
+        </div>
+        <div>
+          <label class="text-[10px] font-mono text-stone-500 block">ANON PUBLIC KEY</label>
+          <input type="password" id="settingKey" placeholder="eyJhbGciOi..." 
+                 class="w-full bg-white border retro-border p-1.5 text-xs outline-none font-mono" />
+        </div>
+      </div>
+      <div class="flex gap-2 justify-end pt-2 border-t retro-border">
+        <button onclick="closeSettingsModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">닫기</button>
+        <button onclick="saveSettings()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">연동 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. Supabase 접속 기본값
+    let SUPABASE_URL = localStorage.getItem('west_sp_url') || 'https://achcypzftdlqqtemmzjz.supabase.co';
+    let SUPABASE_ANON_KEY = localStorage.getItem('west_sp_key') || 'sb_publishable_vOLa6-n7kiH69Ie-_Af4Iw_hN61dTPb';
+    
+    let supabaseClient = null;
+    let membersData = [];
+    let currentFilter = 'ALL';
+    const ROOM_OPTIONS = ['ROOM 1 (👃)', 'ROOM 2', 'ROOM 3', 'ROOM 4 (여자)', 'ROOM 5 (여자)', 'X'];
+
+    // 2. 초기화
+    function initSupabase() {
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        loadMembers();
+        setupRealtime();
+      } else {
+        openSettingsModal();
+      }
+    }
+
+    // 3. 데이터 로드
+    async function loadMembers() {
+      if (!supabaseClient) return;
+      const { data, error } = await supabaseClient
+        .from('members')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) {
+        alert('데이터 로드 실패: ' + error.message);
+        return;
+      }
+
+      membersData = data || [];
+      updateMetrics();
+      renderMembers();
+      renderRooms();
+      renderCarpool();
+    }
+
+    // 4. Supabase Realtime 리스너 등록
+    function setupRealtime() {
+      supabaseClient
+        .channel('public:members')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, payload => {
+          if (payload.eventType === 'UPDATE') {
+            const idx = membersData.findIndex(m => m.id === payload.new.id);
+            if (idx !== -1) membersData[idx] = payload.new;
+          } else if (payload.eventType === 'INSERT') {
+            membersData.push(payload.new);
+          } else if (payload.eventType === 'DELETE') {
+            membersData = membersData.filter(m => m.id !== payload.old.id);
+          }
+          updateMetrics();
+          renderMembers();
+          renderRooms();
+          renderCarpool();
+        })
+        .subscribe();
+    }
+
+    // 5. 상단 카운터 업데이트
+    function updateMetrics() {
+      const checkedIn = membersData.filter(m => m.is_checked_in).length;
+      const noPhone = membersData.filter(m => !m.phone || m.phone.trim() === '').length;
+      document.getElementById('checkedInCount').innerText = checkedIn;
+      document.getElementById('totalCount').innerText = membersData.length;
+      document.getElementById('noPhoneCount').innerText = `${noPhone}명 번호미등록`;
+    }
+
+    // 6. 탭 전환
+    function switchTab(tab) {
+      ['members', 'rooms', 'carpool'].forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        const view = document.getElementById(`view-${t}`);
+        if (t === tab) {
+          btn.className = "py-2 text-xs font-bold text-center bg-[#2B448C] text-white shadow-sm transition-all";
+          view.classList.remove('hidden');
+        } else {
+          btn.className = "py-2 text-xs font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all";
+          view.classList.add('hidden');
+        }
+      });
+    }
+
+    // 7. 필터 설정
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-chip').forEach(btn => {
+        if (btn.dataset.filter === filter) {
+          btn.className = "filter-chip px-2 py-0.5 border retro-border font-bold bg-[#2B448C] text-white";
+        } else {
+          btn.className = "filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]";
+        }
+      });
+      renderMembers();
+    }
+
+    // 8. 명단 렌더링
+    function renderMembers() {
+      const container = document.getElementById('membersList');
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+
+      let filtered = membersData.filter(m => {
+        // 검색어 매칭
+        const matchSearch = m.name.toLowerCase().includes(search) || 
+                            (m.carpool && m.carpool.toLowerCase().includes(search)) ||
+                            (m.room_no && m.room_no.toLowerCase().includes(search));
+        if (!matchSearch) return false;
+
+        // 필터 매칭
+        if (currentFilter === 'UNCHECKED') return !m.is_checked_in;
+        if (currentFilter === 'NOPHONE') return !m.phone || m.phone.trim() === '';
+        if (currentFilter === 'NOLUNCH') return !m.lunch_yn;
+        if (currentFilter === 'NOGAME') return m.game_type === '경기 미참여';
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-xs text-stone-400">해당 조건의 인원이 없습니다.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(m => {
+        const isChecked = m.is_checked_in;
+        const hasPhone = m.phone && m.phone.trim() !== '';
+        const rawPhone = hasPhone ? m.phone.replace(/[^0-9]/g, '') : '';
+        const phoneFormatted = hasPhone ? formatPhone(m.phone) : '번호 등록 필요';
+
+        return `
+          <div class="border retro-border ${isChecked ? 'bg-white/70' : 'bg-white/30'} p-3 rounded-none relative">
+            <div class="flex items-start justify-between">
+              
+              <!-- 좌측: 이름 / 성별 / 출석 상태 -->
+              <div class="flex items-center gap-2">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCheckIn(${m.id}, this.checked)" 
+                       class="w-4 h-4 accent-[#2B448C] cursor-pointer" />
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-sm font-bold ${isChecked ? 'line-through text-stone-400' : 'text-[#2B448C]'}">${m.name}</span>
+                    <span class="text-[10px] text-stone-400 font-mono">(${m.gender})</span>
+                    ${!m.lunch_yn ? '<span class="text-[9px] bg-[#E06D6D]/15 text-[#E06D6D] border border-[#E06D6D]/30 px-1 font-bold">점심X</span>' : ''}
+                    ${m.game_type === '경기 미참여' ? '<span class="text-[9px] bg-stone-200 text-stone-600 px-1 font-bold">경기X</span>' : ''}
+                  </div>
+                  <div class="text-[10px] font-mono text-[#2B448C]/70 mt-0.5">
+                    ${m.carpool || '차량 미지정'} · ${m.room_no}
+                  </div>
+                </div>
+              </div>
+
+              <!-- 우측: 통화 / 번호 수정 액션 -->
+              <div class="flex items-center gap-1">
+                ${hasPhone ? `
+                  <a href="tel:${rawPhone}" class="px-2.5 py-1 text-[11px] font-bold bg-[#5BAE85] text-white rounded-none border border-[#5BAE85] flex items-center gap-1 active:scale-95">
+                    <i class="fa-solid fa-phone text-[10px]"></i> 통화
+                  </a>
+                  <button onclick="openPhoneModal(${m.id}, '${m.name}', '${m.phone || ''}')" class="px-1.5 py-1 text-[11px] border retro-border bg-stone-100 text-stone-600">
+                    <i class="fa-solid fa-pen text-[9px]"></i>
+                  </button>
+                ` : `
+                  <button onclick="openPhoneModal(${m.id}, '${m.name}', '')" class="px-2 py-1 text-[11px] font-bold bg-[#E06D6D] text-white border border-[#E06D6D] flex items-center gap-1 active:scale-95">
+                    <i class="fa-solid fa-plus text-[9px]"></i> 번호 등록
+                  </button>
+                `}
+              </div>
+            </div>
+
+            <!-- 하단: 비고란 (터치 시 인라인 모달 수정) -->
+            <div class="mt-2 pt-2 border-t retro-border flex justify-between items-center text-[10px] text-stone-500">
+              <span class="truncate flex-1 cursor-pointer hover:underline" onclick="openNoteModal(${m.id}, '${m.name}', '${(m.note || '').replace(/'/g, "\\'")}')">
+                <i class="fa-regular fa-note-sticky mr-1 text-[#2B448C]/60"></i>
+                ${m.note ? `<span class="text-[#C83E34] font-medium">${m.note}</span>` : '<span class="text-stone-400">비고 없음 (터치하여 입력)</span>'}
+              </span>
+              <span class="text-[9px] text-stone-400 font-mono pl-2">${m.game_type}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 9. 방배정 뷰 렌더링
+    function renderRooms() {
+      const container = document.getElementById('roomsContainer');
+      const grouped = {};
+      
+      ROOM_OPTIONS.forEach(r => grouped[r] = []);
+      membersData.forEach(m => {
+        const room = m.room_no || 'X';
+        if (!grouped[room]) grouped[room] = [];
+        grouped[room].push(m);
+      });
+
+      container.innerHTML = Object.keys(grouped).map(roomName => {
+        const occupants = grouped[roomName];
+        return `
+          <div class="border retro-border bg-white/40 p-3 rounded-none space-y-2">
+            <div class="flex justify-between items-center border-b retro-border pb-1">
+              <span class="text-xs font-bold text-[#2B448C]">${roomName}</span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-[#2B448C]/10 text-[#2B448C] border retro-border">
+                ${occupants.length}명
+              </span>
+            </div>
+            
+            <div class="space-y-1.5">
+              ${occupants.length === 0 ? '<div class="text-[11px] text-stone-400 py-1">배정 인원 없음</div>' : ''}
+              ${occupants.map(m => `
+                <div class="flex justify-between items-center bg-white p-1.5 border retro-border text-xs">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-[#2B448C]">${m.name}</span>
+                    <span class="text-[10px] text-stone-400 font-mono">(${m.gender})</span>${m.is_checked_in ? '<span class="w-1.5 h-1.5 rounded-full bg-[#5BAE85]"></span>' : ''}
+                  </div>
+                  
+                  <!-- 방 이동 선택 드롭다운 -->
+                  <select onchange="updateRoom(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
+                    ${ROOM_OPTIONS.map(opt => `<option value="${opt}" ${opt === m.room_no ? 'selected' : ''}>${opt}</option>`).join('')}
+                  </select>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 10. 카풀 뷰 렌더링
+    function renderCarpool() {
+      const container = document.getElementById('carpoolContainer');
+      const grouped = {};
+
+      membersData.forEach(m => {
+        let car = m.carpool ? m.carpool.replace(' (차주)', '').trim() : '미배정';
+        if (!grouped[car]) grouped[car] = [];
+        grouped[car].push(m);
+      });
+
+      // 번호순 정렬
+      const sortedKeys = Object.keys(grouped).sort((a, b) => {
+        const numA = parseInt(a.replace(/[^0-9]/g, '')) || 99;
+        const numB = parseInt(b.replace(/[^0-9]/g, '')) || 99;
+        return numA - numB;
+      });
+
+      container.innerHTML = sortedKeys.map(carKey => {
+        const list = grouped[carKey];
+        return `
+          <div class="border retro-border bg-white/40 p-3 rounded-none space-y-2">
+            <div class="flex justify-between items-center border-b retro-border pb-1">
+              <span class="text-xs font-bold text-[#2B448C]"><i class="fa-solid fa-car text-stone-400 mr-1"></i> ${carKey}</span>
+              <span class="text-[10px] font-mono text-[#2B448C]">${list.length}명 탑승</span>
+            </div>
+            
+            <div class="space-y-1">
+              ${list.map(m => {
+                const isOwner = m.carpool && m.carpool.includes('(차주)');
+                const rawPhone = m.phone ? m.phone.replace(/[^0-9]/g, '') : null;
+                return `
+                  <div class="flex justify-between items-center text-xs py-1 border-b border-stone-100 last:border-none">
+                    <div class="flex items-center gap-1.5">
+                      <span class="${isOwner ? 'font-bold text-[#C83E34]' : 'font-medium text-[#2B448C]'}">${m.name}</span>${isOwner ? '<span class="text-[9px] bg-[#C83E34] text-white px-1 font-mono">차주</span>' : ''}
+                      ${m.is_checked_in ? '<span class="text-[9px] text-[#5BAE85] font-bold">도착</span>' : ''}
+                    </div>
+                    <div>
+                      ${rawPhone ? `
+                        <a href="tel:${rawPhone}" class="text-[10px] text-[#2B448C] underline font-mono">
+                          <i class="fa-solid fa-phone mr-0.5 text-[9px]"></i> ${formatPhone(m.phone)}
+                        </a>
+                      ` : '<span class="text-[10px] text-[#E06D6D]">번호 없음</span>'}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 11. DB 액션: 출석 체크 토글
+    async function toggleCheckIn(id, isChecked) {
+      if (!supabaseClient) return;
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ is_checked_in: isChecked, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) {
+        alert('출석 갱신 실패: ' + error.message);
+        loadMembers();
+      }
+    }
+
+    // 12. DB 액션: 방 이동
+    async function updateRoom(id, newRoom) {
+      if (!supabaseClient) return;
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ room_no: newRoom, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) {
+        alert('방배정 변경 실패: ' + error.message);
+        loadMembers();
+      }
+    }
+
+    // 13. 모달 제어: 전화번호
+    function openPhoneModal(id, name, phone) {
+      document.getElementById('phoneModalMemberId').value = id;
+      document.getElementById('phoneModalTitle').innerText = `${name} 님 연락처 수정`;
+      document.getElementById('phoneModalInput').value = phone || '';
+      document.getElementById('phoneModal').classList.remove('hidden');
+    }
+    function closePhoneModal() {
+      document.getElementById('phoneModal').classList.add('hidden');
+    }
+    async function savePhone() {
+      const id = document.getElementById('phoneModalMemberId').value;
+      const phone = document.getElementById('phoneModalInput').value.trim();
+
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ phone: phone || null, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) {
+        alert('연락처 저장 실패: ' + error.message);
+      } else {
+        closePhoneModal();
+      }
+    }
+
+    // 14. 모달 제어: 비고(메모)
+    function openNoteModal(id, name, note) {
+      document.getElementById('noteModalMemberId').value = id;
+      document.getElementById('noteModalTitle').innerText = `${name} 님 특이사항/메모`;
+      document.getElementById('noteModalInput').value = note || '';
+      document.getElementById('noteModal').classList.remove('hidden');
+    }
+    function closeNoteModal() {
+      document.getElementById('noteModal').classList.add('hidden');
+    }
+    async function saveNote() {
+      const id = document.getElementById('noteModalMemberId').value;
+      const note = document.getElementById('noteModalInput').value.trim();
+
+      const { error } = await supabaseClient
+        .from('members')
+        .update({ note: note || null, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+      if (error) {
+        alert('메모 저장 실패: ' + error.message);
+      } else {
+        closeNoteModal();
+      }
+    }
+
+    // 15. 모달 제어: Supabase 환경설정
+    function openSettingsModal() {
+      document.getElementById('settingUrl').value = SUPABASE_URL;
+      document.getElementById('settingKey').value = SUPABASE_ANON_KEY;
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+    function saveSettings() {
+      const url = document.getElementById('settingUrl').value.trim();
+      const key = document.getElementById('settingKey').value.trim();
+      if (!url || !key) {
+        alert('URL과 anon Key를 모두 입력해주세요.');
+        return;
+      }
+      localStorage.setItem('west_sp_url', url);
+      localStorage.setItem('west_sp_key', key);
+      SUPABASE_URL = url;
+      SUPABASE_ANON_KEY = key;
+      closeSettingsModal();
+      initSupabase();
+    }
+
+    // 보조 함수: 휴대폰 번호 포맷팅
+    function formatPhone(phone) {
+      if (!phone) return '';
+      const clean = phone.replace(/[^0-9]/g, '');
+      if (clean.length === 11) {
+        return clean.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+      }
+      if (clean.length === 10) {
+        return clean.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+      }
+      return phone;
+    }
+
+    // 시작
+    window.addEventListener('DOMContentLoaded', initSupabase);
+  </script>
+</body>
+</html>
