@@ -38,10 +38,10 @@
 </head>
 <body class="p-2 sm:p-6 flex justify-center items-start min-h-screen">
 
-  <!-- 메인 종이 카드 컨테이너 -->
-  <div class="w-full max-w-lg bg-[#FAF9F5] p-4 sm:p-5 rounded-none sm:rounded-sm shadow-md border retro-border min-h-[92vh] flex flex-col justify-between">
+  <!-- 메인 종이 카드 컨테이너 (스크롤 턱 방지 및 자연스러운 높이 확장) -->
+  <div class="w-full max-w-lg bg-[#FAF9F5] p-4 sm:p-5 rounded-none sm:rounded-sm shadow-md border retro-border min-h-screen flex flex-col">
     
-    <div>
+    <div class="flex-1">
       <!-- Header (제목 꺾쇠 줄바꿈 방지 + 버튼명 축소 및 여백 최적화) -->
       <header class="flex justify-between items-center pb-2.5 border-b retro-border gap-2">
         <div class="min-w-0">
@@ -115,12 +115,25 @@
         </div>
       </div>
 
-      <!-- 탭 2: 방배정 뷰 (내부 고정 스크롤 max-h 제거) -->
+      <!-- 탭 2: 방배정 뷰 (내부 고정 스크롤 max-h 제거 및 공개 제어 추가) -->
       <div id="view-rooms" class="hidden space-y-3">
         <div class="flex justify-between items-center text-xs pb-1 border-b retro-border">
           <span class="font-bold text-[#2B448C]">실시간 방배정 보드</span>
-          <span class="text-[10px] text-stone-400">배정 인원 실시간 확인</span>
+          <!-- 관리자 전용: 공개/비공개 전환 버튼 -->
+          <div id="roomPublishControl" class="hidden">
+            <button id="toggleRoomPublishBtn" onclick="confirmToggleRoomPublish()" class="text-[10px] font-bold px-2 py-0.5 border retro-border bg-white shadow-sm active:scale-95">
+              <!-- JS에서 동적 주입 -->
+            </button>
+          </div>
         </div>
+
+        <!-- 일반 사용자용: 비공개 상태일 때 노출되는 안내 화면 -->
+        <div id="roomLockedNotice" class="hidden text-center py-12 px-4 border retro-border bg-white/40 space-y-2">
+          <div class="text-2xl text-stone-400"><i class="fa-solid fa-lock"></i></div>
+          <div class="text-xs font-bold text-[#2B448C]">방배정 준비 중입니다.</div>
+          <div class="text-[11px] text-stone-500">당일 현장에서 깜짝 공개될 예정입니다! 잠시만 기다려주세요. 🤫</div>
+        </div>
+
         <div id="roomsContainer" class="space-y-3"></div>
       </div>
 
@@ -132,8 +145,9 @@
         </div>
         <div id="carpoolContainer" class="space-y-3"></div>
       </div>
+    </div><!-- 상단 콘텐츠 래퍼 닫기 -->
 
-    <!-- Footer (불필요한 레전드 제거 완료) -->
+    <!-- Footer -->
     <footer class="pt-3 mt-4 border-t retro-border flex justify-between items-center text-[11px] text-[#2B448C]/70">
       <span class="font-mono text-[10px]">WEST ICE HOCKEY CLUB</span>
       <span class="text-[10px] text-stone-400 font-mono">GANGNEUNG MT 2026</span>
@@ -249,8 +263,10 @@
     let supabaseClient = null;
     let membersData = [];
      let currentFilter = 'ALL';
-    // 관리자 모드 상태 (기본값 false, 세션 스토리지 유지)
+    // 관리자 모드 상태
     let isAdminMode = sessionStorage.getItem('west_admin_auth') === 'true';
+    // 방배정 공개 여부 (기본 false)
+    let isRoomRevealed = false;
 
     const ROOM_OPTIONS = ['ROOM 1 (👃)', 'ROOM 2', 'ROOM 3', 'ROOM 4 (여자)', 'ROOM 5 (여자)', 'X'];
     // 기본 차량 목록 및 동적 생성 지원
@@ -274,9 +290,20 @@ function getAllCarOptions() {
       setupRealtime();
     }
 
-    // 3. 데이터 로드
+    // 3. 데이터 및 방배정 공개 설정 로드
     async function loadMembers() {
       if (!supabaseClient) return;
+
+      // 방배정 공개 상태 가져오기
+      const { data: settingData } = await supabaseClient
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'is_room_revealed')
+        .single();
+      if (settingData) {
+        isRoomRevealed = (settingData.value === true || settingData.value === 'true');
+      }
+
       const { data, error } = await supabaseClient
         .from('members')
         .select('*')
@@ -292,9 +319,10 @@ function getAllCarOptions() {
       renderMembers();
       renderRooms();
       renderCarpool();
+      updateRoomVisibilityUI();
     }
 
-    // 4. Realtime 리스너 등록
+    // 4. Realtime 리스너 등록 (회원 및 공개설정 실시간 감지)
     function setupRealtime() {
       supabaseClient
         .channel('public:members')
@@ -311,6 +339,13 @@ function getAllCarOptions() {
           renderMembers();
           renderRooms();
           renderCarpool();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, payload => {
+          if (payload.new && payload.new.key === 'is_room_revealed') {
+            isRoomRevealed = (payload.new.value === true || payload.new.value === 'true');
+            updateRoomVisibilityUI();
+            renderRooms();
+          }
         })
         .subscribe();
     }
@@ -481,11 +516,62 @@ function getAllCarOptions() {
       }).join('');
     }
 
+    // 방배정 탭 및 화면 공개 제어 UI 갱신
+    function updateRoomVisibilityUI() {
+      const roomTabBtn = document.getElementById('tab-rooms');
+      const publishControl = document.getElementById('roomPublishControl');
+      const publishBtn = document.getElementById('toggleRoomPublishBtn');
+      const lockedNotice = document.getElementById('roomLockedNotice');
+      const roomsContainer = document.getElementById('roomsContainer');
+
+      // 1. 관리자 모드인 경우
+      if (isAdminMode) {
+        if (roomTabBtn) {
+          roomTabBtn.classList.remove('hidden');
+          roomTabBtn.innerText = isRoomRevealed ? '방배정 (공개됨)' : '방배정 (비공개중)';
+        }
+        if (publishControl) publishControl.classList.remove('hidden');
+        if (publishBtn) {
+          if (isRoomRevealed) {
+            publishBtn.className = "text-[10px] font-bold px-2 py-0.5 border border-[#E06D6D] bg-[#E06D6D]/10 text-[#E06D6D] active:scale-95";
+            publishBtn.innerHTML = '<i class="fa-solid fa-lock mr-1"></i> 방배정 비공개로 전환';
+          } else {
+            publishBtn.className = "text-[10px] font-bold px-2 py-0.5 border border-[#5BAE85] bg-[#5BAE85] text-white active:scale-95";
+            publishBtn.innerHTML = '<i class="fa-solid fa-lock-open mr-1"></i> ✨ 사용자에게 방배정 공개하기';
+          }
+        }
+        // 관리자는 항상 내용 열람 및 편집 가능
+        if (lockedNotice) lockedNotice.classList.add('hidden');
+        if (roomsContainer) roomsContainer.classList.remove('hidden');
+        return;
+      }
+
+      // 2. 일반 사용자 모드인 경우
+      if (publishControl) publishControl.classList.add('hidden');
+      if (roomTabBtn) {
+        roomTabBtn.innerText = '방배정';
+        // 비공개 시 탭 버튼 자체에 자물쇠를 달아주거나 비활성화 느낌 부여
+        if (!isRoomRevealed) {
+          roomTabBtn.innerHTML = '<i class="fa-solid fa-lock text-[9px] mr-1"></i> 방배정';
+        }
+      }
+
+      if (isRoomRevealed) {
+        if (lockedNotice) lockedNotice.classList.add('hidden');
+        if (roomsContainer) roomsContainer.classList.remove('hidden');
+      } else {
+        if (lockedNotice) lockedNotice.classList.remove('hidden');
+        if (roomsContainer) roomsContainer.classList.add('hidden');
+      }
+    }
+
     // 9. 방배정 뷰 렌더링 (관리자만 방 이동 가능)
     function renderRooms() {
+      updateRoomVisibilityUI();
       const container = document.getElementById('roomsContainer');
+      if (!container) return;
+
       const grouped = {};
-      
       ROOM_OPTIONS.forEach(r => grouped[r] = []);
       membersData.forEach(m => {
         const room = m.room_no || 'X';
@@ -522,6 +608,32 @@ function getAllCarOptions() {
           </div>
         `;
       }).join('');
+    }
+
+    // 관리자 모드: 방배정 공개/비공개 토글 확인 모달
+    async function confirmToggleRoomPublish() {
+      const willPublish = !isRoomRevealed;
+      const msg = willPublish
+        ? '📢 전체 사용자에게 방배정을 즉시 공개하시겠습니까?\n일반 회원 화면에서도 방배정 보드가 실시간으로 노출됩니다.'
+        : '🔒 방배정을 다시 비공개 상태로 되돌리시겠습니까?\n일반 회원 화면에서는 준비 중 안내문이 표시됩니다.';
+
+      if (!confirm(msg)) return;
+
+      const { error } = await supabaseClient
+        .from('app_settings')
+        .upsert({
+          key: 'is_room_revealed',
+          value: willPublish,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) {
+        alert('공개 상태 변경 실패: ' + error.message);
+      } else {
+        isRoomRevealed = willPublish;
+        alert(willPublish ? '방배정이 성공적으로 공개되었습니다! 🎉' : '방배정이 비공개로 전환되었습니다.');
+        updateRoomVisibilityUI();
+      }
     }
 
     // 10. 유연한 카풀 뷰 렌더링 (관리자 모드 조건문 적용)
