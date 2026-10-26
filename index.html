@@ -78,16 +78,16 @@
         </div>
       </section>
 
-      <!-- Navigation Tabs: 명단·출석 -> 참가자 명단으로 워딩 변경 -->
+      <!-- Navigation Tabs: 참가자 명단 -> 카풀 현황 -> 방배정 순으로 변경 -->
       <nav class="grid grid-cols-3 gap-1 my-3 bg-[#F5F4EE] p-1 border retro-border">
         <button id="tab-members" onclick="switchTab('members')" class="py-2 text-xs font-bold text-center bg-[#2B448C] text-white shadow-sm transition-all">
           참가자 명단
         </button>
-        <button id="tab-rooms" onclick="switchTab('rooms')" class="py-2 text-xs font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all">
-          방배정
-        </button>
         <button id="tab-carpool" onclick="switchTab('carpool')" class="py-2 text-xs font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all">
           카풀 현황
+        </button>
+        <button id="tab-rooms" onclick="switchTab('rooms')" class="py-2 text-xs font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all">
+          방배정
         </button>
       </nav>
 
@@ -556,16 +556,21 @@ function getAllCarOptions() {
         }
       }
 
+      // 일반 모드에서도 방 컨테이너는 항상 노출 (껍데기 확인용)
+      if (roomsContainer) roomsContainer.classList.remove('hidden');
+
       if (isRoomRevealed) {
         if (lockedNotice) lockedNotice.classList.add('hidden');
-        if (roomsContainer) roomsContainer.classList.remove('hidden');
       } else {
-        if (lockedNotice) lockedNotice.classList.remove('hidden');
-        if (roomsContainer) roomsContainer.classList.add('hidden');
+        // 비공개일 때는 상단에 귀여운 안내 배너만 노출
+        if (lockedNotice) {
+          lockedNotice.classList.remove('hidden');
+          lockedNotice.className = "text-center py-2.5 px-3 border retro-border bg-[#FAF9F5] text-[11px] text-[#2B448C] font-medium mb-2";
+          lockedNotice.innerHTML = '<i class="fa-solid fa-lock text-[10px] mr-1 text-[#C83E34]"></i> 방별 상세 인원은 <strong>MT 당일 현장</strong>에서 정리해서 알려드리겠습니다!';
+        }
       }
-    }
 
-    // 9. 방배정 뷰 렌더링 (관리자만 방 이동 가능)
+    // 9. 방배정 뷰 렌더링 (비공개 시 방 껍데기 유지 + 배정자 블라인드 처리)
     function renderRooms() {
       updateRoomVisibilityUI();
       const container = document.getElementById('roomsContainer');
@@ -581,29 +586,49 @@ function getAllCarOptions() {
 
       container.innerHTML = ROOM_OPTIONS.map(roomName => {
         const occupants = grouped[roomName] || [];
+        const isRevealedToUser = isAdminMode || isRoomRevealed;
+
         return `
           <div class="border retro-border bg-white/40 p-3 rounded-none space-y-2">
             <div class="flex justify-between items-center border-b retro-border pb-1">
-              <span class="text-xs font-bold text-[#2B448C]">${roomName}</span>
+              <span class="text-xs font-bold text-[#2B448C] flex items-center gap-1.5">
+                ${roomName}
+                ${!isRevealedToUser ? '<span class="text-[9px] font-mono px-1 bg-stone-200 text-stone-500 font-normal">비공개</span>' : ''}
+              </span>
               <span class="text-[10px] font-mono px-1.5 py-0.2 bg-[#2B448C]/10 text-[#2B448C] border retro-border">
-                ${occupants.length}명
+                ${occupants.length}명 배정
               </span>
             </div>
             
             <div class="space-y-1.5">
               ${occupants.length === 0 ? '<div class="text-[11px] text-stone-400 py-1">배정 인원 없음</div>' : ''}
-              ${occupants.map(m => `
-                <div class="flex justify-between items-center bg-white p-1.5 border retro-border text-xs">
-                  <span class="font-bold text-[#2B448C]">${m.name}</span>
-                  
-                  <!-- 관리자만 select 박스 노출, 일반 사용자는 미노출 -->
-                  ${isAdminMode ? `
-                    <select onchange="updateRoom(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
-                      ${ROOM_OPTIONS.map(opt => `<option value="${opt}" ${opt === m.room_no ? 'selected' : ''}>${opt}</option>`).join('')}
-                    </select>
-                  ` : ''}
-                </div>
-              `).join('')}
+              ${occupants.map((m, idx) => {
+                if (!isRevealedToUser) {
+                  // 일반 사용자 & 비공개 상태: 껍데기와 슬롯 번호만 노출
+                  return `
+                    <div class="flex justify-between items-center bg-white/80 p-1.5 border retro-border text-xs">
+                      <div class="flex items-center gap-1.5 text-stone-400 font-mono text-[11px]">
+                        <i class="fa-solid fa-user-secret text-[10px] text-stone-300"></i>
+                        <span>배정자 ${idx + 1}</span>
+                      </div>
+                      <span class="text-[10px] text-stone-400 italic font-mono">당일 공개 🤫</span>
+                    </div>
+                  `;
+                }
+
+                // 관리자 또는 공개 상태: 실제 명단 및 드롭다운 노출
+                return `
+                  <div class="flex justify-between items-center bg-white p-1.5 border retro-border text-xs">
+                    <span class="font-bold text-[#2B448C]">${m.name}</span>
+                    
+                    ${isAdminMode ? `
+                      <select onchange="updateRoom(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
+                        ${ROOM_OPTIONS.map(opt => `<option value="${opt}" ${opt === m.room_no ? 'selected' : ''}>${opt}</option>`).join('')}
+                      </select>
+                    ` : ''}
+                  </div>
+                `;
+              }).join('')}
             </div>
           </div>
         `;
