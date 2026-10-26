@@ -54,30 +54,29 @@
         </button>
       </header>
 
-      <!-- Metric Overview -->
-      <section class="py-3 border-b retro-border">
-        <div class="flex justify-between items-end">
-          <div>
-            <span class="text-[10px] font-bold tracking-widest text-[#2B448C]/70 block">CHECK-IN STATUS</span>
-            <div class="flex items-baseline gap-1.5">
-              <span id="checkedInCount" class="text-3xl font-black text-[#C83E34] tracking-tight">0</span>
-              <span class="text-base font-bold text-[#2B448C]/60">/</span>
-              <span id="totalCount" class="text-lg font-bold text-[#2B448C]">22</span>
-            </div>
-          </div>
-          <div class="text-right">
-            <span class="text-[10px] font-mono text-stone-500 block">NO PHONE NUMBERS</span>
-            <span id="noPhoneCount" class="text-[11px] font-bold text-[#E06D6D] bg-[#E06D6D]/10 px-1.5 py-0.5 border border-[#E06D6D]/30 inline-block">
-              0명 미등록
-            </span>
-          </div>
+<!-- Metric Overview: 출석 제거 후 점심/경기/총원 3단 지표로 개편 -->
+      <section class="py-2.5 my-2 border-y retro-border grid grid-cols-3 text-center bg-white/40">
+        <div>
+          <span class="text-[10px] font-bold text-[#2B448C]/70 block">총 인원</span>
+          <span id="totalCount" class="text-xl font-black text-[#2B448C]">22</span>
+          <span class="text-[10px] text-stone-400 font-mono">명</span>
+        </div>
+        <div class="border-x retro-border">
+          <span class="text-[10px] font-bold text-[#2B448C]/70 block">점심 식사</span>
+          <span id="lunchCount" class="text-xl font-black text-[#2B448C]">0</span>
+          <span class="text-[10px] text-stone-400 font-mono">명</span>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold text-[#2B448C]/70 block">경기 플레이어</span>
+          <span id="playerCount" class="text-xl font-black text-[#C83E34]">0</span>
+          <span class="text-[10px] text-stone-400 font-mono">명</span>
         </div>
       </section>
 
-      <!-- Navigation Tabs -->
+      <!-- Navigation Tabs: 명단·출석 -> 참가자 명단으로 워딩 변경 -->
       <nav class="grid grid-cols-3 gap-1 my-3 bg-[#F5F4EE] p-1 border retro-border">
         <button id="tab-members" onclick="switchTab('members')" class="py-2 text-xs font-bold text-center bg-[#2B448C] text-white shadow-sm transition-all">
-          명단·출석
+          참가자 명단
         </button>
         <button id="tab-rooms" onclick="switchTab('rooms')" class="py-2 text-xs font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all">
           방배정
@@ -87,49 +86,32 @@
         </button>
       </nav>
 
-      <!-- 탭 1: 명단 & 출석 뷰 -->
+      <!-- 탭 1: 참가자 명단 뷰 (내부 고정 스크롤 max-h 제거) -->
       <div id="view-members" class="space-y-3">
-        <div class="space-y-2">
-          <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-stone-400"></i>
-            <input type="text" id="searchInput" oninput="renderMembers()" placeholder="이름, 차량, 방 검색..." 
-                   class="w-full bg-white border retro-border pl-8 pr-3 py-1.5 text-xs outline-none focus:border-[#2B448C]" />
-          </div>
-
-          <!-- 필터 칩스: 점심O 및 플레이어 중심 카운트로 개편 -->
-          <div class="flex flex-wrap gap-1 text-[11px]">
-            <button onclick="setFilter('ALL')" class="filter-chip px-2 py-0.5 border retro-border font-bold bg-[#2B448C] text-white" data-filter="ALL">전체</button>
-            <button onclick="setFilter('UNCHECKED')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="UNCHECKED">미출석</button>
-            <button onclick="setFilter('NOPHONE')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="NOPHONE">번호없음</button>
-            <button onclick="setFilter('LUNCH_O')" id="chip-lunch" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="LUNCH_O">점심O (19)</button>
-            <button onclick="setFilter('PLAYER')" id="chip-player" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="PLAYER">플레이어 (17)</button>
-          </div>
-        </div>
-
-        <!-- 인원 리스트 -->
-        <div id="membersList" class="space-y-2 max-h-[58vh] overflow-y-auto pr-0.5">
+        ... (검색 및 필터 영역) ...
+        <!-- 인원 리스트 (전체 화면 스크롤 적용) -->
+        <div id="membersList" class="space-y-2">
           <div class="text-center py-10 text-xs text-stone-400">데이터를 불러오는 중입니다...</div>
         </div>
       </div>
 
-      <!-- 탭 2: 방배정 뷰 -->
-      <div id="view-rooms" class="hidden space-y-3 max-h-[64vh] overflow-y-auto pr-0.5">
+      <!-- 탭 2: 방배정 뷰 (내부 고정 스크롤 max-h 제거) -->
+      <div id="view-rooms" class="hidden space-y-3">
         <div class="flex justify-between items-center text-xs pb-1 border-b retro-border">
           <span class="font-bold text-[#2B448C]">실시간 방배정 보드</span>
-          <span class="text-[10px] text-stone-400">드롭다운으로 바로 방 이동</span>
+          <span class="text-[10px] text-stone-400">배정 인원 실시간 확인</span>
         </div>
         <div id="roomsContainer" class="space-y-3"></div>
       </div>
 
-      <!-- 탭 3: 카풀 뷰 -->
-      <div id="view-carpool" class="hidden space-y-3 max-h-[64vh] overflow-y-auto pr-0.5">
+      <!-- 탭 3: 카풀 뷰 (내부 고정 스크롤 max-h 제거) -->
+      <div id="view-carpool" class="hidden space-y-3">
         <div class="flex justify-between items-center text-xs pb-1 border-b retro-border">
           <span class="font-bold text-[#2B448C]">서울 > 홍천 휴게소 카풀 매칭</span>
-          <span class="text-[10px] text-stone-400">차량·차주 실시간 변경 가능</span>
+          <span class="text-[10px] text-stone-400">차량·차주 실시간 확인</span>
         </div>
         <div id="carpoolContainer" class="space-y-3"></div>
       </div>
-    </div>
 
     <!-- Footer (불필요한 레전드 제거 완료) -->
     <footer class="pt-3 mt-4 border-t retro-border flex justify-between items-center text-[11px] text-[#2B448C]/70">
@@ -268,16 +250,20 @@ function getAllCarOptions() {
         .subscribe();
     }
 
-    // 5. 상단 지표 및 필터 칩 숫자 실시간 업데이트
+    // 5. 상단 지표 및 필터 칩 숫자 실시간 업데이트 (출석 제거 반영)
     function updateMetrics() {
-      const checkedIn = membersData.filter(m => m.is_checked_in).length;
-      const noPhone = membersData.filter(m => !m.phone || m.phone.trim() === '').length;
       const lunchO = membersData.filter(m => m.lunch_yn).length;
       const players = membersData.filter(m => m.game_type === '경기 참여 (플레이어)').length;
 
-      document.getElementById('checkedInCount').innerText = checkedIn;
-      document.getElementById('totalCount').innerText = membersData.length;
-      document.getElementById('noPhoneCount').innerText = `${noPhone}명 미등록`;
+      // 상단 3단 요약 지표 반영
+      const totalEl = document.getElementById('totalCount');
+      if (totalEl) totalEl.innerText = membersData.length;
+
+      const lunchEl = document.getElementById('lunchCount');
+      if (lunchEl) lunchEl.innerText = lunchO;
+
+      const playerEl = document.getElementById('playerCount');
+      if (playerEl) playerEl.innerText = players;
 
       // 필터 칩 실시간 숫자 갱신
       const lunchBtn = document.getElementById('chip-lunch');
@@ -348,14 +334,11 @@ function getAllCarOptions() {
           <div class="border retro-border ${isChecked ? 'bg-white/80' : 'bg-white/30'} p-3 rounded-none relative">
             <div class="flex items-start justify-between">
               
-              <!-- 좌측: 출석 체크 + 프로필 + 점심 토글 + 경기 변경 -->
-              <div class="flex items-start gap-2.5">
-                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCheckIn(${m.id}, this.checked)" 
-                       class="w-4 h-4 mt-1 accent-[#2B448C] cursor-pointer" />
-                <div>
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-sm font-bold ${isChecked ? 'line-through text-stone-400' : 'text-[#2B448C]'}">${m.name}</span>
-                    ${driverBadge}
+              <!-- 좌측: 기본 정보 (출석 체크박스 및 취소선 제거) -->
+              <div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-sm font-bold text-[#2B448C]">${m.name}</span>
+                  ${driverBadge}
 
                     <!-- 점심 참여 원터치 토글 -->
                     <button onclick="toggleLunch(${m.id}, ${!m.lunch_yn})" 
