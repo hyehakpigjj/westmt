@@ -491,7 +491,7 @@ function getAllCarOptions() {
                   ${lunchUI}${gameUI}
                 </div>
                 <div class="text-[10px] font-mono text-[#2B448C]/70 mt-1">
-                  ${m.carpool_car || '미배정'} · ${m.room_no}
+                  ${m.carpool_car || '미배정'}${ (isAdminMode || isRoomRevealed) ? ` · ${m.room_no}` : '' }
                 </div>
               </div>
 
