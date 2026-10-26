@@ -55,8 +55,11 @@
           <span class="text-xs sm:text-sm font-extrabold tracking-tight text-[#C83E34] whitespace-nowrap block">〈 WEST 2026 GANGNEUNG MT 〉</span>
         </div>
         
-        <!-- 우측 상단: '의견' & '관리자' (줄바꿈 방지 whitespace-nowrap 적용) -->
+        <!-- 우측 상단: '새로고침' + '의견' + '관리자' -->
         <div class="flex items-center gap-1 shrink-0">
+          <button id="refreshBtn" onclick="manualRefresh()" title="데이터 새로고침" class="text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/80 px-2 py-1 flex items-center justify-center active:scale-90 shadow-sm whitespace-nowrap">
+            <i id="refreshIcon" class="fa-solid fa-arrows-rotate text-[11px]"></i>
+          </button>
           <button onclick="openFeedbackModal()" class="text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/80 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm whitespace-nowrap">
             <i class="fa-regular fa-comment-dots text-[10px] text-[#C83E34]"></i> 의견
           </button>
@@ -326,6 +329,27 @@ function getAllCarOptions() {
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       loadMembers();
       setupRealtime();
+    }
+
+    // 홈 화면(PWA) 전용 부드러운 데이터 새로고침 함수
+    let isRefreshing = false;
+    async function manualRefresh() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+
+      const icon = document.getElementById('refreshIcon');
+      if (icon) icon.classList.add('fa-spin'); // 아이콘 회전 애니메이션 시작
+
+      try {
+        await loadMembers();
+      } catch (err) {
+        console.error('새로고침 실패:', err);
+      } finally {
+        setTimeout(() => {
+          if (icon) icon.classList.remove('fa-spin'); // 회전 정지
+          isRefreshing = false;
+        }, 500); // 최소 0.5초 돌아가며 시각적 피드백 제공
+      }
     }
 
     // 3. 데이터 및 방배정 공개 설정 로드
