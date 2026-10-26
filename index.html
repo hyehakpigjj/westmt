@@ -42,18 +42,19 @@
   <div class="w-full max-w-lg bg-[#FAF9F5] p-4 sm:p-5 rounded-none sm:rounded-sm shadow-md border retro-border min-h-[92vh] flex flex-col justify-between">
     
     <div>
-      <!-- Header -->
-      <header class="flex justify-between items-center pb-3 border-b retro-border">
-        <div>
-          <span class="text-xs font-bold tracking-wider text-[#C83E34]">〈 WEST 2026 GANGNEUNG MT 〉</span>
-          <span class="block text-[10px] font-mono text-[#2B448C]/70">ADMIN OPERATIONS DESK</span>
+      <!-- Header (제목 꺾쇠 줄바꿈 방지 + 버튼명 축소 및 여백 최적화) -->
+      <header class="flex justify-between items-center pb-2.5 border-b retro-border gap-2">
+        <div class="min-w-0">
+          <span class="text-[11px] sm:text-xs font-bold tracking-tight text-[#C83E34] whitespace-nowrap block">〈 WEST 2026 GANGNEUNG MT 〉</span>
+          <span class="block text-[9px] sm:text-[10px] font-mono text-[#2B448C]/70 truncate">ADMIN OPERATIONS DESK</span>
         </div>
-        <!-- 우측 상단: 익명 의견 남기기 & 관리자 모드 전환 버튼 -->
-        <div class="flex items-center gap-1.5">
-          <button onclick="openFeedbackModal()" class="text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/70 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm">
-            <i class="fa-regular fa-comment-dots text-[10px] text-[#C83E34]"></i> 익명 의견
+        
+        <!-- 우측 상단: '의견' & '관리자' (줄바꿈 방지 whitespace-nowrap 적용) -->
+        <div class="flex items-center gap-1 shrink-0">
+          <button onclick="openFeedbackModal()" class="text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/80 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm whitespace-nowrap">
+            <i class="fa-regular fa-comment-dots text-[10px] text-[#C83E34]"></i> 의견
           </button>
-          <button id="adminModeBtn" onclick="toggleAdminAuth()" class="text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/70 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm">
+          <button id="adminModeBtn" onclick="toggleAdminAuth()" class="text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/80 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm whitespace-nowrap">
             <i class="fa-solid fa-lock text-[10px]"></i> <span id="adminBtnText">관리자</span>
           </button>
         </div>
@@ -736,16 +737,16 @@ function promptAddNewCar() {
       return phone;
     }
 
-    // 관리자 모드 버튼 텍스트/스타일 갱신
+    // 관리자 모드 버튼 텍스트/스타일 갱신 (줄바꿈 방지 클래스 유지)
     function updateAdminButtonUI() {
       const btn = document.getElementById('adminModeBtn');
       const text = document.getElementById('adminBtnText');
       if (!btn || !text) return;
       if (isAdminMode) {
-        btn.className = "text-[11px] font-bold text-white border border-[#C83E34] bg-[#C83E34] px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm";
+        btn.className = "text-[11px] font-bold text-white border border-[#C83E34] bg-[#C83E34] px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm whitespace-nowrap";
         text.innerText = "관리자 ON";
       } else {
-        btn.className = "text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/70 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm";
+        btn.className = "text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/80 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm whitespace-nowrap";
         text.innerText = "관리자";
       }
     }
