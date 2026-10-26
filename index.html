@@ -144,10 +144,20 @@
         <div id="roomsContainer" class="space-y-3"></div>
       </div>
 
-      <!-- 탭 3: 카풀 뷰 (내부 고정 스크롤 max-h 제거) -->
+      <!-- 탭 3: 카풀 뷰 (구간별 섞기 서브탭 추가) -->
       <div id="view-carpool" class="hidden space-y-3">
+        <!-- 1차/2차 구간 전환 서브 네비게이션 -->
+        <div class="grid grid-cols-2 gap-1 p-1 bg-[#F5F4EE] border retro-border">
+          <button id="btn-leg1" onclick="switchCarpoolLeg(1)" class="py-1.5 text-[11px] font-bold text-center bg-[#2B448C] text-white shadow-sm transition-all">
+            1차: 서울 → 홍천 (출발)
+          </button>
+          <button id="btn-leg2" onclick="switchCarpoolLeg(2)" class="py-1.5 text-[11px] font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all">
+            2차: 홍천 → 강릉 (섞기)
+          </button>
+        </div>
+
         <div class="flex justify-between items-center text-xs pb-1 border-b retro-border">
-          <span class="font-bold text-[#2B448C]">서울 > 홍천 휴게소 카풀 매칭</span>
+          <span id="carpoolLegTitle" class="font-bold text-[#2B448C]">서울 → 홍천휴게소 카풀</span>
           <span class="text-[10px] text-stone-400">차량·차주 실시간 확인</span>
         </div>
         <div id="carpoolContainer" class="space-y-3"></div>
@@ -278,6 +288,27 @@
     const ROOM_OPTIONS = ['ROOM 1 (👃)', 'ROOM 2', 'ROOM 3', 'ROOM 4 (여자)', 'ROOM 5 (여자)', 'X'];
     // 기본 차량 목록 및 동적 생성 지원
 let customCars = ['1번 차', '2번 차', '3번 차', '4번 차', '5번 차', '6번 차', '7번 차', '8번 차', '9번 차', '10번 차'];
+
+// 현재 카풀 구간 (1: 서울->홍천, 2: 홍천->강릉)
+let currentCarpoolLeg = 1;
+
+function switchCarpoolLeg(leg) {
+  currentCarpoolLeg = leg;
+  const btn1 = document.getElementById('btn-leg1');
+  const btn2 = document.getElementById('btn-leg2');
+  const title = document.getElementById('carpoolLegTitle');
+
+  if (leg === 1) {
+    if (btn1) btn1.className = "py-1.5 text-[11px] font-bold text-center bg-[#2B448C] text-white shadow-sm transition-all";
+    if (btn2) btn2.className = "py-1.5 text-[11px] font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all";
+    if (title) title.innerText = "서울 → 홍천휴게소 카풀";
+  } else {
+    if (btn1) btn1.className = "py-1.5 text-[11px] font-bold text-center text-[#2B448C] hover:bg-white/60 transition-all";
+    if (btn2) btn2.className = "py-1.5 text-[11px] font-bold text-center bg-[#2B448C] text-white shadow-sm transition-all";
+    if (title) title.innerText = "홍천휴게소 → 강릉 (섞기) 카풀";
+  }
+  renderCarpool();
+}
 
 function getAllCarOptions() {
   const currentAssigned = membersData.map(m => m.carpool_car).filter(c => c && c !== '미배정');
@@ -670,15 +701,19 @@ function getAllCarOptions() {
       }
     }
 
-    // 10. 유연한 카풀 뷰 렌더링 (관리자 모드 조건문 적용)
+    // 10. 유연한 카풀 뷰 렌더링 (1차/2차 구간 지원)
     function renderCarpool() {
       const container = document.getElementById('carpoolContainer');
       const allCars = getAllCarOptions();
       const grouped = {};
 
       allCars.forEach(c => grouped[c] = []);
+
+      // 구간에 맞는 컬럼 선택 (carpool_leg1 또는 carpool_leg2, 없으면 기존 carpool_car fallback)
+      const legKey = currentCarpoolLeg === 1 ? 'carpool_leg1' : 'carpool_leg2';
+
       membersData.forEach(m => {
-        let car = m.carpool_car || '미배정';
+        let car = m[legKey] || m.carpool_car || '미배정';
         if (!grouped[car]) grouped[car] = [];
         grouped[car].push(m);
       });
@@ -704,13 +739,14 @@ function getAllCarOptions() {
             <div class="space-y-1.5">
               ${list.length === 0 ? '<div class="text-[11px] text-stone-400 py-1">탑승 인원 없음</div>' : ''}
               ${list.map(m => {
+                const currentAssignedCar = m[legKey] || m.carpool_car || '미배정';
                 const rawPhone = m.phone ? m.phone.replace(/[^0-9]/g, '') : null;
                 return `
                   <div class="flex justify-between items-center bg-white p-1.5 border retro-border text-xs">
                     <div class="flex items-center gap-1.5">
                       <span class="font-bold ${m.is_driver ? 'text-[#C83E34]' : 'text-[#2B448C]'}">${m.name}</span>
                       
-                      <!-- 차주 UI: 관리자는 토글 버튼, 일반 사용자는 뱃지만 노출 -->
+                      <!-- 차주 UI: 관리자는 토글 버튼, 일반 사용자는 뱃지 -->
                       ${isAdminMode ? `
                         <button onclick="toggleDriver(${m.id}, ${!m.is_driver})" 
                                 class="text-[9px] px-1.5 py-0.5 border font-bold transition-all ${m.is_driver ? 'bg-[#C83E34] text-white border-[#C83E34]' : 'bg-stone-100 text-stone-400 border-stone-200'}">
@@ -719,11 +755,11 @@ function getAllCarOptions() {
                       ` : (m.is_driver ? '<span class="text-[9px] bg-[#C83E34] text-white px-1 font-mono">차주</span>' : '')}
                     </div>
                     
-                    <!-- 우측 UI: 관리자는 차량변경 select, 일반 사용자는 전화걸기 링크 -->
+                    <!-- 우측 UI: 관리자는 현재 구간 차량 변경 select, 일반 사용자는 전화걸기 -->
                     <div>
                       ${isAdminMode ? `
-                        <select onchange="updateCarpool(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
-                          ${allCars.map(opt => `<option value="${opt}" ${opt === (m.carpool_car || '미배정') ? 'selected' : ''}>${opt}</option>`).join('')}
+                        <select onchange="updateCarpoolLeg(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
+                          ${allCars.map(opt => `<option value="${opt}" ${opt === currentAssignedCar ? 'selected' : ''}>${opt}</option>`).join('')}
                         </select>
                       ` : (rawPhone ? `
                         <a href="tel:${rawPhone}" class="text-[10px] text-[#2B448C] underline font-mono flex items-center gap-1">
@@ -761,10 +797,21 @@ function getAllCarOptions() {
       if (error) alert('방배정 변경 실패: ' + error.message);
     }
 
-    async function updateCarpool(id, newCar) {
+    async function updateCarpoolLeg(id, newCar) {
+      const legColumn = currentCarpoolLeg === 1 ? 'carpool_leg1' : 'carpool_leg2';
+      const updateData = {
+        [legColumn]: newCar,
+        updated_at: new Date().toISOString()
+      };
+
+      // 1차 구간일 경우 기본 carpool_car도 동기화
+      if (currentCarpoolLeg === 1) {
+        updateData.carpool_car = newCar;
+      }
+
       const { error } = await supabaseClient
         .from('members')
-        .update({ carpool_car: newCar, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq('id', id);
 
       if (error) alert('카풀 배정 변경 실패: ' + error.message);
