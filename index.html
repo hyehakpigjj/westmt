@@ -93,7 +93,22 @@
 
       <!-- 탭 1: 참가자 명단 뷰 (내부 고정 스크롤 max-h 제거) -->
       <div id="view-members" class="space-y-3">
-        ... (검색 및 필터 영역) ...
+        <div class="space-y-2">
+          <div class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-stone-400"></i>
+            <input type="text" id="searchInput" oninput="renderMembers()" placeholder="이름 검색..." 
+                   class="w-full bg-white border retro-border pl-8 pr-3 py-1.5 text-xs outline-none focus:border-[#2B448C]" />
+          </div>
+
+          <!-- 필터 칩스 -->
+          <div class="flex flex-wrap gap-1 text-[11px]">
+            <button onclick="setFilter('ALL')" class="filter-chip px-2 py-0.5 border retro-border font-bold bg-[#2B448C] text-white" data-filter="ALL">전체</button>
+            <button onclick="setFilter('NOPHONE')" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="NOPHONE">번호없음</button>
+            <button onclick="setFilter('LUNCH_O')" id="chip-lunch" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="LUNCH_O">점심O (0)</button>
+            <button onclick="setFilter('PLAYER')" id="chip-player" class="filter-chip px-2 py-0.5 border retro-border font-medium bg-white/60 text-[#2B448C]" data-filter="PLAYER">플레이어 (0)</button>
+          </div>
+        </div>
+
         <!-- 인원 리스트 (전체 화면 스크롤 적용) -->
         <div id="membersList" class="space-y-2">
           <div class="text-center py-10 text-xs text-stone-400">데이터를 불러오는 중입니다...</div>
@@ -406,7 +421,7 @@ function getAllCarOptions() {
                   ${lunchUI}${gameUI}
                 </div>
                 <div class="text-[10px] font-mono text-[#2B448C]/70 mt-1">
-                  ${m.carpool_car \vert{}\vert{} '미배정'} · ${m.room_no}
+                  ${m.carpool_car || '미배정'} · ${m.room_no}
                 </div>
               </div>
 
@@ -427,11 +442,15 @@ function getAllCarOptions() {
             </div>
 
             <!-- 하단: 비고가 있는 경우에만 표시 -->
-            ${m.note && m.note.trim() !== '' ? ` <div class="mt-2 pt-1.5 border-t retro-border flex items-center gap-1.5 text-[10px] text-[#C83E34] font-medium ${isAdminMode ? 'cursor-pointer hover:underline' : ''}" ${isAdminMode ? `onclick="openEditModal(${m.id})"` : ''}>
+            ${m.note && m.note.trim() !== '' ? `
+              <div class="mt-2 pt-1.5 border-t retro-border flex items-center gap-1.5 text-[10px] text-[#C83E34] font-medium ${isAdminMode ? 'cursor-pointer hover:underline' : ''}" ${isAdminMode ? `onclick="openEditModal(${m.id})"` : ''}>
                 <i class="fa-regular fa-note-sticky text-[#2B448C]/60 text-[11px]"></i>
                 <span class="truncate">${m.note}</span>
               </div>
             ` : ''}
+          </div>
+        `;
+      }).join('');
     }
 
     // 9. 방배정 뷰 렌더링 (관리자만 방 이동 가능)
@@ -717,7 +736,107 @@ function promptAddNewCar() {
       return phone;
     }
 
-    window.addEventListener('DOMContentLoaded', initSupabase);
+    // 관리자 모드 버튼 텍스트/스타일 갱신
+    function updateAdminButtonUI() {
+      const btn = document.getElementById('adminModeBtn');
+      const text = document.getElementById('adminBtnText');
+      if (!btn || !text) return;
+      if (isAdminMode) {
+        btn.className = "text-[11px] font-bold text-white border border-[#C83E34] bg-[#C83E34] px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm";
+        text.innerText = "관리자 ON";
+      } else {
+        btn.className = "text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/70 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm";
+        text.innerText = "관리자";
+      }
+    }
+
+    // 관리자 PIN 인증 토글
+    function toggleAdminAuth() {
+      if (isAdminMode) {
+        openAdminModal();
+        return;
+      }
+      const pin = prompt('관리자 비밀번호(PIN)를 입력하세요:');
+      if (pin === '858') {
+        isAdminMode = true;
+        sessionStorage.setItem('west_admin_auth', 'true');
+        alert('관리자 모드로 전환되었습니다.');
+        updateAdminButtonUI();
+        renderMembers();
+        renderRooms();
+        renderCarpool();
+      } else if (pin !== null) {
+        alert('비밀번호가 올바르지 않습니다.');
+      }
+    }
+
+    // 관리자 로그아웃
+    function logoutAdmin() {
+      isAdminMode = false;
+      sessionStorage.removeItem('west_admin_auth');
+      alert('일반 사용자 모드로 전환되었습니다.');
+      closeAdminModal();
+      updateAdminButtonUI();
+      renderMembers();
+      renderRooms();
+      renderCarpool();
+    }
+
+    // 익명 의견 모달 제어 및 Supabase 전송
+    function openFeedbackModal() {
+      document.getElementById('feedbackInput').value = '';
+      document.getElementById('feedbackModal').classList.remove('hidden');
+    }
+    function closeFeedbackModal() {
+      document.getElementById('feedbackModal').classList.add('hidden');
+    }
+    async function submitFeedback() {
+      const content = document.getElementById('feedbackInput').value.trim();
+      if (!content) {
+        alert('내용을 입력해주세요.');
+        return;
+      }
+      const { error } = await supabaseClient.from('feedbacks').insert([{ content }]);
+      if (error) {
+        alert('전송 실패: ' + error.message);
+      } else {
+        alert('운영진에게 익명으로 의견이 전달되었습니다. 감사합니다!');
+        closeFeedbackModal();
+      }
+    }
+
+    // 접수된 익명 의견 불러오기
+    async function loadFeedbacks() {
+      const container = document.getElementById('feedbackListContainer');
+      if (!container) return;
+      const { data, error } = await supabaseClient.from('feedbacks').select('*').order('id', { ascending: false });
+      if (error) {
+        container.innerHTML = `<div class="text-[11px] text-[#E06D6D]">로드 실패: ${error.message}</div>`;
+        return;
+      }
+      document.getElementById('feedbackCount').innerText = (data || []).length;
+      if (!data || data.length === 0) {
+        container.innerHTML = `<div class="text-[11px] text-stone-400 py-3 text-center">아직 접수된 의견이 없습니다.</div>`;
+        return;
+      }
+      container.innerHTML = data.map(f => {
+        const time = new Date(f.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return `
+          <div class="p-2 bg-white border retro-border text-xs space-y-1">
+            <div class="flex justify-between items-center text-[10px] text-stone-400 font-mono">
+              <span>익명 회원</span>
+              <span>${time}</span>
+            </div>
+            <p class="text-stone-700 whitespace-pre-wrap leading-relaxed">${f.content}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initSupabase();
+      updateAdminButtonUI();
+    });
   </script>
 </body>
 </html>
