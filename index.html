@@ -63,7 +63,7 @@
       <section class="py-2.5 my-2 border-y retro-border grid grid-cols-3 text-center bg-white/40">
         <div>
           <span class="text-[10px] font-bold text-[#2B448C]/70 block">총 인원</span>
-          <span id="totalCount" class="text-xl font-black text-[#2B448C]">22</span>
+          <span id="totalCount" class="text-xl font-black text-[#2B448C]">-</span>
           <span class="text-[10px] text-stone-400 font-mono">명</span>
         </div>
         <div class="border-x retro-border">
@@ -569,6 +569,7 @@ function getAllCarOptions() {
           lockedNotice.innerHTML = '<i class="fa-solid fa-lock text-[10px] mr-1 text-[#C83E34]"></i> 방별 상세 인원은 <strong>MT 당일 현장</strong>에서 정리해서 알려드리겠습니다!';
         }
       }
+    }
 
     // 9. 방배정 뷰 렌더링 (비공개 시 방 껍데기 유지 + 배정자 블라인드 처리)
     function renderRooms() {
@@ -658,6 +659,7 @@ function getAllCarOptions() {
         isRoomRevealed = willPublish;
         alert(willPublish ? '방배정이 성공적으로 공개되었습니다! 🎉' : '방배정이 비공개로 전환되었습니다.');
         updateRoomVisibilityUI();
+        renderRooms();
       }
     }
 
