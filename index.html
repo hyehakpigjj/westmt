@@ -48,10 +48,15 @@
           <span class="text-xs font-bold tracking-wider text-[#C83E34]">〈 WEST 2026 GANGNEUNG MT 〉</span>
           <span class="block text-[10px] font-mono text-[#2B448C]/70">ADMIN OPERATIONS DESK</span>
         </div>
-        <!-- 관리자 메뉴 버튼 (Supabase 설정창 숨김 및 관리 기능 배치) -->
-        <button onclick="openAdminModal()" class="text-[11px] font-bold text-[#2B448C] hover:text-[#C83E34] border border-[#2B448C]/30 bg-white/60 px-2 py-1 flex items-center gap-1 active:scale-95">
-          <i class="fa-solid fa-user-shield text-[10px]"></i> 관리자
-        </button>
+        <!-- 우측 상단: 익명 의견 남기기 & 관리자 모드 전환 버튼 -->
+        <div class="flex items-center gap-1.5">
+          <button onclick="openFeedbackModal()" class="text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/70 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm">
+            <i class="fa-regular fa-comment-dots text-[10px] text-[#C83E34]"></i> 익명 의견
+          </button>
+          <button id="adminModeBtn" onclick="toggleAdminAuth()" class="text-[11px] font-bold text-[#2B448C] border border-[#2B448C]/30 bg-white/70 px-2 py-1 flex items-center gap-1 active:scale-95 shadow-sm">
+            <i class="fa-solid fa-lock text-[10px]"></i> <span id="adminBtnText">관리자</span>
+          </button>
+        </div>
       </header>
 
 <!-- Metric Overview: 출석 제거 후 점심/경기/총원 3단 지표로 개편 -->
@@ -150,26 +155,63 @@
     </div>
   </div>
 
-  <!-- 모달: 관리자 메뉴 -->
-  <div id="adminModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
-    <div class="w-full max-w-xs bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-4">
+  <!-- 모달 1: 익명 의견 남기기 -->
+  <div id="feedbackModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
+    <div class="w-full max-w-xs bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-3">
       <div class="flex justify-between items-center border-b retro-border pb-2">
         <span class="text-xs font-bold text-[#C83E34] flex items-center gap-1">
-          <i class="fa-solid fa-shield-halved"></i> 현장 관리자 도구
+          <i class="fa-regular fa-comment-dots"></i> 운영진에게 익명 의견 남기기
+        </span>
+        <button onclick="closeFeedbackModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
+      </div>
+      <div>
+        <p class="text-[10px] text-stone-500 mb-2 leading-relaxed">
+          이름 없이 익명으로 안전하게 전달됩니다. 건의, 문의, 응원 등 자유롭게 남겨주세요.
+        </p>
+        <textarea id="feedbackInput" rows="4" placeholder="내용을 입력해주세요..." 
+                  class="w-full bg-white border retro-border p-2 text-xs outline-none focus:border-[#2B448C] resize-none"></textarea>
+      </div>
+      <div class="flex gap-2 justify-end pt-1 border-t retro-border">
+        <button onclick="closeFeedbackModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">닫기</button>
+        <button onclick="submitFeedback()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">보내기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달 2: 관리자 도구 및 익명 피드백 확인 -->
+  <div id="adminModal" class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 hidden">
+    <div class="w-full max-w-sm bg-[#FAF9F5] p-4 border retro-border shadow-lg space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b retro-border pb-2">
+        <span class="text-xs font-bold text-[#C83E34] flex items-center gap-1">
+          <i class="fa-solid fa-shield-halved"></i> 관리자 전용 도구
         </span>
         <button onclick="closeAdminModal()" class="text-xs text-stone-400 hover:text-black">&times;</button>
       </div>
       
+      <!-- 관리자 기능 액션 -->
       <div class="space-y-2">
-        <button onclick="resetAllCheckIn()" class="w-full text-left p-2.5 bg-white border retro-border text-xs text-[#E06D6D] font-bold hover:bg-stone-50 active:scale-[0.99] flex items-center justify-between">
-          <span><i class="fa-solid fa-rotate-left mr-1.5"></i> 전체 출석 일괄 초기화</span>
+        <button onclick="openAddMemberPrompt()" class="w-full text-left p-2.5 bg-white border retro-border text-xs text-[#2B448C] font-bold hover:bg-stone-50 flex items-center justify-between">
+          <span><i class="fa-solid fa-user-plus mr-1.5"></i> 현장 신규 인원 등록</span>
           <i class="fa-solid fa-chevron-right text-[10px] text-stone-400"></i>
         </button>
 
-        <button onclick="openAddMemberPrompt()" class="w-full text-left p-2.5 bg-white border retro-border text-xs text-[#2B448C] font-bold hover:bg-stone-50 active:scale-[0.99] flex items-center justify-between">
-          <span><i class="fa-solid fa-user-plus mr-1.5"></i> 현장 신규 인원 추가</span>
-          <i class="fa-solid fa-chevron-right text-[10px] text-stone-400"></i>
+        <button onclick="logoutAdmin()" class="w-full text-left p-2.5 bg-white border retro-border text-xs text-[#E06D6D] font-bold hover:bg-stone-50 flex items-center justify-between">
+          <span><i class="fa-solid fa-arrow-right-from-bracket mr-1.5"></i> 관리자 모드 종료 (사용자 모드로 전환)</span>
+          <i class="fa-solid fa-lock text-[10px] text-[#E06D6D]"></i>
         </button>
+      </div>
+
+      <!-- 접수된 익명 의견 목록 -->
+      <div class="border-t retro-border pt-3 space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-[#2B448C]">
+            <i class="fa-solid fa-inbox mr-1"></i> 접수된 익명 의견 (<span id="feedbackCount">0</span>)
+          </span>
+          <button onclick="loadFeedbacks()" class="text-[10px] underline text-[#2B448C]">새로고침</button>
+        </div>
+        <div id="feedbackListContainer" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+          <div class="text-[11px] text-stone-400 py-3 text-center">불러오는 중...</div>
+        </div>
       </div>
 
       <div class="border-t retro-border pt-2 text-right">
@@ -185,7 +227,9 @@
     
     let supabaseClient = null;
     let membersData = [];
-    let currentFilter = 'ALL';
+     let currentFilter = 'ALL';
+    // 관리자 모드 상태 (기본값 false, 세션 스토리지 유지)
+    let isAdminMode = sessionStorage.getItem('west_admin_auth') === 'true';
 
     const ROOM_OPTIONS = ['ROOM 1 (👃)', 'ROOM 2', 'ROOM 3', 'ROOM 4 (여자)', 'ROOM 5 (여자)', 'X'];
     // 기본 차량 목록 및 동적 생성 지원
@@ -325,68 +369,72 @@ function getAllCarOptions() {
       }
 
       container.innerHTML = filtered.map(m => {
-        const isChecked = m.is_checked_in;
         const hasPhone = m.phone && m.phone.trim() !== '';
         const rawPhone = hasPhone ? m.phone.replace(/[^0-9]/g, '') : '';
         const driverBadge = m.is_driver ? '<span class="text-[9px] bg-[#C83E34] text-white px-1 font-mono">차주</span>' : '';
 
+        // [권한 분리] 점심 UI: 관리자일 때만 토글 버튼, 일반 사용자는 읽기 전용 뱃지
+        const lunchUI = isAdminMode ? `
+          <button onclick="toggleLunch(${m.id},${!m.lunch_yn})" 
+                  class="text-[9px] font-bold px-1.5 py-0.5 border transition-all ${m.lunch_yn ? 'bg-[#5BAE85] text-white border-[#5BAE85]' : 'bg-[#E06D6D] text-white border-[#E06D6D]'}">
+            점심 ${m.lunch_yn ? 'O' : 'X'}
+          </button>
+        ` : `
+          <span class="text-[9px] font-bold px-1.5 py-0.5 border ${m.lunch_yn ? 'bg-[#5BAE85]/15 text-[#5BAE85] border-[#5BAE85]/30' : 'bg-[#E06D6D]/15 text-[#E06D6D] border-[#E06D6D]/30'}">
+            점심 ${m.lunch_yn ? 'O' : 'X'}
+          </span>
+        `;
+
+        // [권한 분리] 경기 UI: 관리자일 때만 select 선택 가능, 일반 사용자는 뱃지
+        const gameUI = isAdminMode ? `
+          <select onchange="updateGameType(${m.id}, this.value)" 
+                  class="text-[9px] border retro-border font-bold py-0.5 px-1 outline-none ${m.game_type === '경기 미참여' ? 'bg-stone-200 text-stone-600' : 'bg-white text-[#2B448C]'}">
+            <option value="경기 참여 (플레이어)" ${m.game_type === '경기 참여 (플레이어)' ? 'selected' : ''}>플레이어</option>
+            <option value="경기 참여 (골리)" ${m.game_type === '경기 참여 (골리)' ? 'selected' : ''}>골리</option>
+            <option value="경기 미참여" ${m.game_type === '경기 미참여' ? 'selected' : ''}>경기 미참여</option>
+          </select>
+        ` : (m.game_type !== '경기 참여 (플레이어)' ? `<span class="text-[9px] font-bold px-1 py-0.5 bg-stone-200 text-stone-600">${m.game_type}</span>` : '');
+
         return `
-          <div class="border retro-border ${isChecked ? 'bg-white/80' : 'bg-white/30'} p-3 rounded-none relative">
+          <div class="border retro-border bg-white/40 p-3 rounded-none relative">
             <div class="flex items-start justify-between">
               
-              <!-- 좌측: 기본 정보 (출석 체크박스 및 취소선 제거) -->
+              <!-- 좌측: 이름 + 차주배지 + 점심 + 경기 -->
               <div>
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="text-sm font-bold text-[#2B448C]">${m.name}</span>
-                  ${driverBadge}
-
-                    <!-- 점심 참여 원터치 토글 -->
-                    <button onclick="toggleLunch(${m.id}, ${!m.lunch_yn})" 
-                            class="text-[9px] font-bold px-1.5 py-0.5 border transition-all ${m.lunch_yn ? 'bg-[#5BAE85] text-white border-[#5BAE85]' : 'bg-[#E06D6D] text-white border-[#E06D6D]'}">
-                      점심 ${m.lunch_yn ? 'O' : 'X'}
-                    </button>
-
-                    <!-- 경기 참여 상태 선택 -->
-                    <select onchange="updateGameType(${m.id}, this.value)" 
-                            class="text-[9px] border retro-border font-bold py-0.5 px-1 outline-none ${m.game_type === '경기 미참여' ? 'bg-stone-200 text-stone-600' : 'bg-white text-[#2B448C]'}">
-                      <option value="경기 참여 (플레이어)" ${m.game_type === '경기 참여 (플레이어)' ? 'selected' : ''}>플레이어</option>
-                      <option value="경기 참여 (골리)" ${m.game_type === '경기 참여 (골리)' ? 'selected' : ''}>골리</option>
-                      <option value="경기 미참여" ${m.game_type === '경기 미참여' ? 'selected' : ''}>경기 미참여</option>
-                    </select>
-                  </div>
-                  <div class="text-[10px] font-mono text-[#2B448C]/70 mt-1">
-                    ${m.carpool_car || '미배정'} · ${m.room_no}
-                  </div>
+                  <span class="text-sm font-bold text-[#2B448C]">${m.name}</span>${driverBadge}
+                  ${lunchUI}${gameUI}
+                </div>
+                <div class="text-[10px] font-mono text-[#2B448C]/70 mt-1">
+                  ${m.carpool_car \vert{}\vert{} '미배정'} · ${m.room_no}
                 </div>
               </div>
 
-              <!-- 우측: 통화 / 통합 수정(연락처+비고) 액션 -->
+              <!-- 우측: 통화 버튼(누구나 가능) + 연필 수정(관리자만 노출) -->
               <div class="flex items-center gap-1">
                 ${hasPhone ? `
                   <a href="tel:${rawPhone}" class="px-2.5 py-1 text-[11px] font-bold bg-[#5BAE85] text-white rounded-none border border-[#5BAE85] flex items-center gap-1 active:scale-95">
                     <i class="fa-solid fa-phone text-[10px]"></i> 통화
                   </a>
                 ` : ''}
-                <button onclick="openEditModal(${m.id})" 
-                        class="px-2 py-1 text-[11px] border retro-border bg-stone-100 text-stone-600 hover:bg-stone-200 active:scale-95 flex items-center justify-center">
-                  <i class="fa-solid fa-pen text-[10px]"></i>
-                </button>
+                ${isAdminMode ? `
+                  <button onclick="openEditModal(${m.id})" 
+                          class="px-2 py-1 text-[11px] border retro-border bg-stone-100 text-stone-600 hover:bg-stone-200 active:scale-95 flex items-center justify-center">
+                    <i class="fa-solid fa-pen text-[10px]"></i>
+                  </button>
+                ` : ''}
               </div>
             </div>
 
-            <!-- 하단: 비고가 있는 경우에만 표시 (없으면 구좌 숨김) -->
-            ${m.note && m.note.trim() !== '' ? `
-              <div class="mt-2 pt-1.5 border-t retro-border flex items-center gap-1.5 text-[10px] text-[#C83E34] font-medium cursor-pointer" onclick="openEditModal(${m.id})">
+            <!-- 하단: 비고가 있는 경우에만 표시 -->
+            ${m.note && m.note.trim() !== '' ? ` <div class="mt-2 pt-1.5 border-t retro-border flex items-center gap-1.5 text-[10px] text-[#C83E34] font-medium ${isAdminMode ? 'cursor-pointer hover:underline' : ''}" ${isAdminMode ? `onclick="openEditModal(${m.id})"` : ''}>
                 <i class="fa-regular fa-note-sticky text-[#2B448C]/60 text-[11px]"></i>
                 <span class="truncate">${m.note}</span>
               </div>
             ` : ''}
-          </div>
-        `;
-      }).join('');
     }
 
-    // 9. 방배정 뷰 렌더링
+    // 9. 방배정 뷰 렌더링 (관리자만 방 이동 가능)
     function renderRooms() {
       const container = document.getElementById('roomsContainer');
       const grouped = {};
@@ -413,14 +461,14 @@ function getAllCarOptions() {
               ${occupants.length === 0 ? '<div class="text-[11px] text-stone-400 py-1">배정 인원 없음</div>' : ''}
               ${occupants.map(m => `
                 <div class="flex justify-between items-center bg-white p-1.5 border retro-border text-xs">
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-bold text-[#2B448C]">${m.name}</span>
-                    <span class="text-[10px] text-stone-400 font-mono">(${m.gender})</span>${m.is_checked_in ? '<span class="w-1.5 h-1.5 rounded-full bg-[#5BAE85]"></span>' : ''}
-                  </div>
+                  <span class="font-bold text-[#2B448C]">${m.name}</span>
                   
-                  <select onchange="updateRoom(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
-                    ${ROOM_OPTIONS.map(opt => `<option value="${opt}" ${opt === m.room_no ? 'selected' : ''}>${opt}</option>`).join('')}
-                  </select>
+                  <!-- 관리자만 select 박스 노출, 일반 사용자는 미노출 -->
+                  ${isAdminMode ? `
+                    <select onchange="updateRoom(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
+                      ${ROOM_OPTIONS.map(opt => `<option value="${opt}" ${opt === m.room_no ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+                  ` : ''}
                 </div>
               `).join('')}
             </div>
@@ -429,7 +477,7 @@ function getAllCarOptions() {
       }).join('');
     }
 
-    // 10. 유연한 카풀 뷰 렌더링 (+새 차량 추가 지원)
+    // 10. 유연한 카풀 뷰 렌더링 (관리자 모드 조건문 적용)
     function renderCarpool() {
       const container = document.getElementById('carpoolContainer');
       const allCars = getAllCarOptions();
@@ -442,14 +490,14 @@ function getAllCarOptions() {
         grouped[car].push(m);
       });
 
-      // 상단에 신규 차량 추가 버튼 배치
-      let html = `
+      // 관리자일 때만 새 차량 추가 버튼 노출
+      let html = isAdminMode ? `
         <div class="flex justify-end pb-1">
           <button onclick="promptAddNewCar()" class="text-[10px] font-bold bg-white border retro-border px-2 py-1 text-[#2B448C] hover:bg-stone-50 active:scale-95">
             <i class="fa-solid fa-plus mr-1"></i> 새 차량/호차 추가
           </button>
         </div>
-      `;
+      ` : '';
 
       html += allCars.map(carKey => {
         const list = grouped[carKey] || [];
@@ -462,24 +510,37 @@ function getAllCarOptions() {
             
             <div class="space-y-1.5">
               ${list.length === 0 ? '<div class="text-[11px] text-stone-400 py-1">탑승 인원 없음</div>' : ''}
-              ${list.map(m => `
-                <div class="flex justify-between items-center bg-white p-1.5 border retro-border text-xs">
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-bold ${m.is_driver ? 'text-[#C83E34]' : 'text-[#2B448C]'}">${m.name}</span>
-                    <!-- 차주 여부 토글 버튼 -->
-                    <button onclick="toggleDriver(${m.id},${!m.is_driver})" 
-                            class="text-[9px] px-1.5 py-0.5 border font-bold transition-all ${m.is_driver ? 'bg-[#C83E34] text-white border-[#C83E34]' : 'bg-stone-100 text-stone-400 border-stone-200'}">
-                      차주
-                    </button>
-                    ${m.is_checked_in ? '<span class="text-[9px] text-[#5BAE85] font-bold">도착</span>' : ''}
+              ${list.map(m => {
+                const rawPhone = m.phone ? m.phone.replace(/[^0-9]/g, '') : null;
+                return `
+                  <div class="flex justify-between items-center bg-white p-1.5 border retro-border text-xs">
+                    <div class="flex items-center gap-1.5">
+                      <span class="font-bold ${m.is_driver ? 'text-[#C83E34]' : 'text-[#2B448C]'}">${m.name}</span>
+                      
+                      <!-- 차주 UI: 관리자는 토글 버튼, 일반 사용자는 뱃지만 노출 -->
+                      ${isAdminMode ? `
+                        <button onclick="toggleDriver(${m.id}, ${!m.is_driver})" 
+                                class="text-[9px] px-1.5 py-0.5 border font-bold transition-all ${m.is_driver ? 'bg-[#C83E34] text-white border-[#C83E34]' : 'bg-stone-100 text-stone-400 border-stone-200'}">
+                          차주
+                        </button>
+                      ` : (m.is_driver ? '<span class="text-[9px] bg-[#C83E34] text-white px-1 font-mono">차주</span>' : '')}
+                    </div>
+                    
+                    <!-- 우측 UI: 관리자는 차량변경 select, 일반 사용자는 전화걸기 링크 -->
+                    <div>
+                      ${isAdminMode ? `
+                        <select onchange="updateCarpool(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
+                          ${allCars.map(opt => `<option value="${opt}" ${opt === (m.carpool_car || '미배정') ? 'selected' : ''}>${opt}</option>`).join('')}
+                        </select>
+                      ` : (rawPhone ? `
+                        <a href="tel:${rawPhone}" class="text-[10px] text-[#2B448C] underline font-mono flex items-center gap-1">
+                          <i class="fa-solid fa-phone text-[9px] text-[#5BAE85]"></i> ${formatPhone(m.phone)}
+                        </a>
+                      ` : '<span class="text-[10px] text-stone-400">번호없음</span>')}
+                    </div>
                   </div>
-                  
-                  <!-- 동적 차량 배정 드롭다운 -->
-                  <select onchange="updateCarpool(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
-                    ${allCars.map(opt => `<option value="${opt}" ${opt === (m.carpool_car || '미배정') ? 'selected' : ''}>${opt}</option>`).join('')}
-                  </select>
-                </div>
-              `).join('')}
+                `;
+              }).join('')}
             </div>
           </div>
         `;
