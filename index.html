@@ -45,8 +45,7 @@
       <!-- Header (제목 꺾쇠 줄바꿈 방지 + 버튼명 축소 및 여백 최적화) -->
       <header class="flex justify-between items-center pb-2.5 border-b retro-border gap-2">
         <div class="min-w-0">
-          <span class="text-[11px] sm:text-xs font-bold tracking-tight text-[#C83E34] whitespace-nowrap block">〈 WEST 2026 GANGNEUNG MT 〉</span>
-          <span class="block text-[9px] sm:text-[10px] font-mono text-[#2B448C]/70 truncate">ADMIN OPERATIONS DESK</span>
+          <span class="text-xs sm:text-sm font-extrabold tracking-tight text-[#C83E34] whitespace-nowrap block">〈 WEST 2026 GANGNEUNG MT 〉</span>
         </div>
         
         <!-- 우측 상단: '의견' & '관리자' (줄바꿈 방지 whitespace-nowrap 적용) -->
@@ -164,9 +163,15 @@
         </div>
       </div>
 
-      <div class="flex gap-2 justify-end pt-1 border-t retro-border">
-        <button onclick="closeEditModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">취소</button>
-        <button onclick="saveEditModal()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">저장</button>
+      <!-- 하단 버튼: 관리자 전용 삭제 버튼(좌측) + 취소/저장(우측) -->
+      <div class="flex justify-between items-center pt-2 border-t retro-border">
+        <button id="deleteMemberBtn" onclick="deleteCurrentMember()" class="px-2 py-1 text-[11px] font-bold text-[#E06D6D] border border-[#E06D6D]/40 bg-[#E06D6D]/10 hover:bg-[#E06D6D] hover:text-white transition-all active:scale-95 flex items-center gap-1">
+          <i class="fa-solid fa-trash-can text-[10px]"></i> 삭제
+        </button>
+        <div class="flex gap-1.5">
+          <button onclick="closeEditModal()" class="px-3 py-1 text-xs border retro-border bg-stone-100">취소</button>
+          <button onclick="saveEditModal()" class="px-3 py-1 text-xs font-bold bg-[#2B448C] text-white">저장</button>
+        </div>
       </div>
     </div>
   </div>
@@ -672,6 +677,29 @@ function promptAddNewCar() {
       if (error) {
         alert('저장 실패: ' + error.message);
       } else {
+        closeEditModal();
+      }
+    }
+
+    // 관리자 전용: 현재 선택된 인원 삭제
+    async function deleteCurrentMember() {
+      const id = document.getElementById('editModalMemberId').value;
+      const member = membersData.find(m => m.id == id);
+      const name = member ? member.name : '해당 참가자';
+
+      if (!confirm(`정말 [${name}] 님을 명단에서 삭제하시겠습니까?\n카풀 및 방배정에서도 함께 제외됩니다.`)) {
+        return;
+      }
+
+      const { error } = await supabaseClient
+        .from('members')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        alert('삭제 실패: ' + error.message);
+      } else {
+        alert(`[${name}] 님이 정상적으로 삭제되었습니다.`);
         closeEditModal();
       }
     }
