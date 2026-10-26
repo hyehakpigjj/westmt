@@ -751,8 +751,16 @@ function getAllCarOptions() {
         </div>
       ` : '';
 
-      html += allCars.map(carKey => {
+      hhtml += allCars.map(carKey => {
         const list = grouped[carKey] || [];
+
+        // 1. 차주 우선(1번), 그 외 인원은 가나다순 정렬
+        list.sort((a, b) => {
+          if (a.is_driver && !b.is_driver) return -1;
+          if (!a.is_driver && b.is_driver) return 1;
+          return (a.name || '').localeCompare(b.name || '', 'ko-KR');
+        });
+
         return `
           <div class="border retro-border bg-white/40 p-3 rounded-none space-y-2">
             <div class="flex justify-between items-center border-b retro-border pb-1">
@@ -768,7 +776,37 @@ function getAllCarOptions() {
                 return `
                   <div class="flex justify-between items-center bg-white p-1.5 border retro-border text-xs">
                     <div class="flex items-center gap-1.5">
-                      <span class="font-bold ${m.is_driver ? 'text-[#C83E34]' : 'text-[#2B448C]'}">${m.name}</span>
+                      <!-- 차주 이름 색상도 남색(#2B448C)으로 통일 -->
+                      <span class="font-bold text-[#2B448C]">${m.name}</span>
+                      
+                      <!-- 차주 UI: 관리자는 토글 버튼, 일반 사용자는 뱃지 -->
+                      ${isAdminMode ? `
+                        <button onclick="toggleDriver(${m.id}, ${!m.is_driver})" 
+                                class="text-[9px] px-1.5 py-0.5 border font-bold transition-all ${m.is_driver ? 'bg-[#C83E34] text-white border-[#C83E34]' : 'bg-stone-100 text-stone-400 border-stone-200'}">
+                          차주
+                        </button>
+                      ` : (m.is_driver ? '<span class="text-[9px] bg-[#C83E34] text-white px-1 font-mono">차주</span>' : '')}
+                    </div>
+                    
+                    <!-- 우측 UI: 관리자는 현재 구간 차량 변경 select, 일반 사용자는 전화걸기 -->
+                    <div>
+                      ${isAdminMode ? `
+                        <select onchange="updateCarpoolLeg(${m.id}, this.value)" class="text-[11px] bg-[#FAF9F5] border retro-border py-0.5 px-1 font-mono outline-none text-[#2B448C]">
+                          ${allCars.map(opt => `<option value="${opt}" ${opt === currentAssignedCar ? 'selected' : ''}>${opt}</option>`).join('')}
+                        </select>
+                      ` : (rawPhone ? `
+                        <a href="tel:${rawPhone}" class="text-[10px] text-[#2B448C] underline font-mono flex items-center gap-1">
+                          <i class="fa-solid fa-phone text-[9px] text-[#5BAE85]"></i> ${formatPhone(m.phone)}
+                        </a>
+                      ` : '<span class="text-[10px] text-stone-400">번호없음</span>')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
                       
                       <!-- 차주 UI: 관리자는 토글 버튼, 일반 사용자는 뱃지 -->
                       ${isAdminMode ? `
